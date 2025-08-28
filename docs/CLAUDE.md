@@ -7,7 +7,7 @@ Technology Stack
 
 Frontend: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
 Backend: Next.js API Routes (serverless), Vercel deployment
-Database: PlanetScale (MySQL) for persistent data, Vercel KV (Redis) for caching
+Database: Neon PostgreSQL for persistent data, Vercel KV (Redis) for caching
 External APIs: Strava API v3, Anthropic Claude API
 Deployment: Vercel with custom domain
 
@@ -226,7 +226,7 @@ STRAVA_CLIENT_SECRET=your_strava_client_secret
 ANTHROPIC_API_KEY=your_anthropic_api_key
 
 # Database
-DATABASE_URL=your_planetscale_connection_string
+DATABASE_URL=your_neon_postgresql_connection_string
 
 # Redis Cache
 KV_REST_API_URL=your_vercel_kv_url
@@ -260,7 +260,7 @@ Technology Stack
 
 Frontend: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
 Backend: Next.js API Routes (serverless), Vercel deployment
-Database: PlanetScale (MySQL) for persistent data, Vercel KV (Redis) for caching
+Database: Neon PostgreSQL for persistent data, Vercel KV (Redis) for caching
 External APIs: Strava API v3, Anthropic Claude API
 Deployment: Vercel with custom domain
 
@@ -479,7 +479,7 @@ STRAVA_CLIENT_SECRET=your_strava_client_secret
 ANTHROPIC_API_KEY=your_anthropic_api_key
 
 # Database
-DATABASE_URL=your_planetscale_connection_string
+DATABASE_URL=your_neon_postgresql_connection_string
 
 # Redis Cache
 KV_REST_API_URL=your_vercel_kv_url

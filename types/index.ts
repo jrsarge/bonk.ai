@@ -40,14 +40,22 @@ export interface TrainingAnalysis {
   recommendedRaceDistance: '5k' | '10k' | 'half' | 'marathon';
 }
 
-export type RaceDistance = '5k' | '10k' | 'half' | 'marathon';
+export type RaceDistance = '5k' | '10k' | 'half_marathon' | 'marathon';
 
 export interface TrainingPlan {
   id: string;
   userId: string;
   raceDistance: RaceDistance;
   targetTime?: string;
-  weeks: Week[];
+  planData: {
+    weeks: Week[];
+    summary: {
+      totalWeeks: number;
+      peakWeeklyMileage: number;
+      raceDate?: string;
+      description: string;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
 }

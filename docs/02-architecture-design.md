@@ -14,7 +14,7 @@ Backend
 
 Next.js API Routes (serverless functions)
 Vercel KV (Redis) for session and token storage
-PlanetScale (MySQL) for persistent data storage
+Neon PostgreSQL for persistent data storage
 
 External APIs
 
@@ -38,30 +38,35 @@ System Architecture
          │              ┌─────────────────┐
          │              │                 │
          └──────────────│   Database      │
-                        │   (PlanetScale + │
+                        │   (Neon         │
+                        │    PostgreSQL + │
                         │    Vercel KV)   │
                         └─────────────────┘
 Database Schema
-Users Table (PlanetScale)
-sqlCREATE TABLE users (
-  id VARCHAR(36) PRIMARY KEY,
+Users Table (Neon PostgreSQL)
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   strava_id BIGINT UNIQUE NOT NULL,
   email VARCHAR(255),
   name VARCHAR(255),
   profile_picture_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-Training Plans Table (PlanetScale)
-sqlCREATE TABLE training_plans (
-  id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,
-  race_distance ENUM('5k', '10k', 'half_marathon', 'marathon'),
+```
+Training Plans Table (Neon PostgreSQL)
+```sql
+CREATE TABLE training_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  race_distance VARCHAR(20) CHECK (race_distance IN ('5k', '10k', 'half_marathon', 'marathon')),
   target_time VARCHAR(20),
-  plan_data JSON NOT NULL,
+  plan_data JSONB NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 Cache Layer (Vercel KV)
 
 Strava tokens: strava_token:{user_id} (expires with token)
@@ -172,7 +177,7 @@ CI/CD Pipeline
 GitHub integration with Vercel
 Automatic deployments on main branch
 Preview deployments for PRs
-Database migrations via PlanetScale
+Database migrations via Neon PostgreSQL
 
 Scalability Considerations
 Current Limitations
