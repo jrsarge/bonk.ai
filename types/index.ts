@@ -1,24 +1,5 @@
 // Main type definitions for bonk.ai
 
-export interface User {
-  id: string;
-  stravaId: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  profilePicture?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Session {
-  userId: string;
-  stravaAccessToken: string;
-  stravaRefreshToken: string;
-  stravaExpiresAt: number;
-  createdAt: Date;
-}
-
 export interface Activity {
   id: number;
   name: string;
@@ -44,7 +25,6 @@ export type RaceDistance = '5k' | '10k' | 'half_marathon' | 'marathon';
 
 export interface TrainingPlan {
   id: string;
-  userId: string;
   raceDistance: RaceDistance;
   targetTime?: string;
   planData: {
@@ -56,8 +36,7 @@ export interface TrainingPlan {
       description: string;
     };
   };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
 }
 
 export interface Week {

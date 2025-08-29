@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { AuthGuard, UserProfile } from '@/components/auth';
-import { useAuth } from '@/lib/auth/context';
+import { useApp } from '@/lib/auth/context';
+import { PlanGenerator } from '@/components/plans';
 
 export default function Dashboard() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { user, logout } = useAuth();
+  const { stravaAthlete, trainingPlans, exportTrainingPlans } = useApp();
 
   return (
     <AuthGuard>
@@ -24,12 +23,12 @@ export default function Dashboard() {
             </Link>
             
             <div className="flex items-center space-x-4">
-              <UserProfile user={user} />
+              <UserProfile />
               <button 
-                onClick={logout}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                onClick={exportTrainingPlans}
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               >
-                Logout
+                Export Plans
               </button>
             </div>
           </nav>
@@ -40,7 +39,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome back{user?.firstName ? `, ${user.firstName}` : ''}!
+            Welcome back{stravaAthlete?.firstname ? `, ${stravaAthlete.firstname}` : ''}!
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Ready to create your personalized training plan?
@@ -78,7 +77,7 @@ export default function Dashboard() {
               Training Plans
             </h3>
             <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-              0
+              {trainingPlans.length}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
               Created plans
@@ -87,74 +86,58 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Generate Your Training Plan
-          </h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="raceDistance" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Race Distance
-              </label>
-              <select 
-                id="raceDistance"
-                className="w-full md:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Select a distance</option>
-                <option value="5k">5K</option>
-                <option value="10k">10K</option>
-                <option value="half">Half Marathon</option>
-                <option value="marathon">Marathon</option>
-              </select>
-            </div>
+        <PlanGenerator onGenerate={(plan) => console.log('Generated plan:', plan)} />
 
-            <div>
-              <label htmlFor="targetTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Target Time (optional)
-              </label>
-              <input 
-                type="text"
-                id="targetTime"
-                placeholder="e.g., 1:30:00"
-                className="w-full md:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            <button
-              disabled={isLoading}
-              className="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Generating Plan...</span>
-                </>
-              ) : (
-                <span>Generate Training Plan</span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Plans (placeholder) */}
+        {/* Training Plans */}
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Your Training Plans
           </h2>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
-            <div className="text-gray-400 dark:text-gray-500">
-              <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
+          {trainingPlans.length > 0 ? (
+            <div className="space-y-4">
+              {trainingPlans.map((plan) => (
+                <div key={plan.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        {plan.raceDistance.toUpperCase()} Training Plan
+                      </h3>
+                      {plan.targetTime && (
+                        <p className="text-gray-600 dark:text-gray-300 mb-2">
+                          Target: {plan.targetTime}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Created {new Date(plan.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {plan.planData.weeks.length} weeks
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Peak: {Math.max(...plan.planData.weeks.map(w => w.totalDistance)).toFixed(0)} mi
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No training plans yet
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Generate your first AI-powered training plan to get started.
-            </p>
-          </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+              <div className="text-gray-400 dark:text-gray-500">
+                <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No training plans yet
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Generate your first AI-powered training plan to get started.
+              </p>
+            </div>
+          )}
         </div>
       </main>
       </div>

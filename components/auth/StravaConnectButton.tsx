@@ -1,5 +1,6 @@
 'use client';
 
+import { useApp } from '@/lib/auth/context';
 import { useState } from 'react';
 
 interface StravaConnectButtonProps {
@@ -11,14 +12,13 @@ export default function StravaConnectButton({
   className = '', 
   onConnect 
 }: StravaConnectButtonProps) {
+  const { connectStrava } = useApp();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = () => {
     setIsConnecting(true);
     onConnect?.();
-    
-    // Redirect to Strava OAuth flow
-    window.location.href = '/api/auth/strava';
+    connectStrava();
   };
 
   return (

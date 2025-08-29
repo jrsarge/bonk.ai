@@ -1,12 +1,14 @@
+'use client';
+
 import Link from 'next/link';
-import { User } from '@/types';
+import { useApp } from '@/lib/auth/context';
 
 interface HeaderProps {
-  user?: User | null;
-  onLogout?: () => void;
+  className?: string;
 }
 
-export default function Header({ user, onLogout }: HeaderProps) {
+export default function Header({ className }: HeaderProps) {
+  const { stravaAthlete, isStravaConnected, disconnectStrava } = useApp();
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-4 py-4">
@@ -21,7 +23,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
           
           {/* Navigation */}
           <div className="flex items-center space-x-6">
-            {user ? (
+            {isStravaConnected ? (
               <>
                 <Link 
                   href="/dashboard" 
@@ -31,13 +33,13 @@ export default function Header({ user, onLogout }: HeaderProps) {
                 </Link>
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {user.firstName} {user.lastName}
+                    {stravaAthlete?.firstname} {stravaAthlete?.lastname}
                   </span>
                   <button
-                    onClick={onLogout}
+                    onClick={disconnectStrava}
                     className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors text-sm"
                   >
-                    Logout
+                    Disconnect
                   </button>
                 </div>
               </>

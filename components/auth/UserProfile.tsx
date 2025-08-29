@@ -1,40 +1,47 @@
 'use client';
 
-import { User } from '@/types';
+import { useApp } from '@/lib/auth/context';
 
 interface UserProfileProps {
-  user: User | null;
   className?: string;
 }
 
-export default function UserProfile({ user, className = '' }: UserProfileProps) {
-  if (!user) {
+export default function UserProfile({ className = '' }: UserProfileProps) {
+  const { stravaAthlete, disconnectStrava, isStravaConnected } = useApp();
+
+  if (!isStravaConnected || !stravaAthlete) {
     return null;
   }
 
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
-      {user.profilePicture ? (
+      {stravaAthlete.profile_medium ? (
         <img 
-          src={user.profilePicture} 
-          alt={`${user.firstName} ${user.lastName}`}
+          src={stravaAthlete.profile_medium} 
+          alt={`${stravaAthlete.firstname} ${stravaAthlete.lastname}`}
           className="w-8 h-8 rounded-full"
         />
       ) : (
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
           <span className="text-white font-semibold text-sm">
-            {user.firstName?.[0] || ''}{user.lastName?.[0] || ''}
+            {stravaAthlete.firstname?.[0] || ''}{stravaAthlete.lastname?.[0] || ''}
           </span>
         </div>
       )}
-      <div>
+      <div className="flex-1">
         <p className="font-medium text-gray-900 dark:text-white">
-          {user.firstName} {user.lastName}
+          {stravaAthlete.firstname} {stravaAthlete.lastname}
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          {user.email}
+          Connected to Strava
         </p>
       </div>
+      <button
+        onClick={disconnectStrava}
+        className="text-sm text-red-600 hover:text-red-800 transition-colors"
+      >
+        Disconnect
+      </button>
     </div>
   );
 }

@@ -1,81 +1,103 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@/types';
+import { TrainingPlan } from '@/types';
+import { StravaAthlete } from '@/types/strava';
 
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  login: () => void;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+interface AppContextType {
+  stravaAthlete: StravaAthlete | null;
+  stravaAccessToken: string | null;
+  trainingPlans: TrainingPlan[];
+  isStravaConnected: boolean;
+  connectStrava: () => void;
+  disconnectStrava: () => void;
+  saveTrainingPlan: (plan: TrainingPlan) => void;
+  deleteTrainingPlan: (planId: string) => void;
+  exportTrainingPlans: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [stravaAthlete, setStravaAthlete] = useState<StravaAthlete | null>(null);
+  const [stravaAccessToken, setStravaAccessToken] = useState<string | null>(null);
+  const [trainingPlans, setTrainingPlans] = useState<TrainingPlan[]>([]);
 
-  const fetchUser = async () => {
-    try {
-      const response = await fetch('/api/user/profile');
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else if (response.status !== 401) {
-        console.error('Failed to fetch user profile:', response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    const savedAthlete = localStorage.getItem('strava_athlete');
+    const savedToken = localStorage.getItem('strava_access_token');
+    const savedPlans = localStorage.getItem('training_plans');
+
+    if (savedAthlete) {
+      setStravaAthlete(JSON.parse(savedAthlete));
     }
-  };
+    if (savedToken) {
+      setStravaAccessToken(savedToken);
+    }
+    if (savedPlans) {
+      setTrainingPlans(JSON.parse(savedPlans));
+    }
+  }, []);
 
-  const login = () => {
+  const connectStrava = () => {
     window.location.href = '/api/auth/strava';
   };
 
-  const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still redirect on error
-      window.location.href = '/';
-    }
+  const disconnectStrava = () => {
+    localStorage.removeItem('strava_athlete');
+    localStorage.removeItem('strava_access_token');
+    setStravaAthlete(null);
+    setStravaAccessToken(null);
   };
 
-  const refreshUser = async () => {
-    await fetchUser();
+  const saveTrainingPlan = (plan: TrainingPlan) => {
+    const updatedPlans = [...trainingPlans.filter(p => p.id !== plan.id), plan];
+    setTrainingPlans(updatedPlans);
+    localStorage.setItem('training_plans', JSON.stringify(updatedPlans));
   };
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  const deleteTrainingPlan = (planId: string) => {
+    const updatedPlans = trainingPlans.filter(p => p.id !== planId);
+    setTrainingPlans(updatedPlans);
+    localStorage.setItem('training_plans', JSON.stringify(updatedPlans));
+  };
+
+  const exportTrainingPlans = () => {
+    const dataStr = JSON.stringify(trainingPlans, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bonk-training-plans-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const isStravaConnected = !!(stravaAthlete && stravaAccessToken);
 
   const value = {
-    user,
-    isLoading,
-    login,
-    logout,
-    refreshUser,
+    stravaAthlete,
+    stravaAccessToken,
+    trainingPlans,
+    isStravaConnected,
+    connectStrava,
+    disconnectStrava,
+    saveTrainingPlan,
+    deleteTrainingPlan,
+    exportTrainingPlans,
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AppContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </AppContext.Provider>
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
+export function useApp() {
+  const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useApp must be used within an AppProvider');
   }
   return context;
 }

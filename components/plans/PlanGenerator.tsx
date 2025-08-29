@@ -1,30 +1,72 @@
 'use client';
 
 import { useState } from 'react';
-import { RaceDistance } from '@/types';
+import { useApp } from '@/lib/auth/context';
+import { RaceDistance, TrainingPlan } from '@/types';
 
 interface PlanGeneratorProps {
-  onGenerate?: (params: { raceDistance: RaceDistance; targetTime?: string }) => void;
+  onGenerate?: (plan: TrainingPlan) => void;
 }
 
 export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
+  const { stravaAccessToken, saveTrainingPlan } = useApp();
   const [raceDistance, setRaceDistance] = useState<RaceDistance | ''>('');
   const [targetTime, setTargetTime] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!raceDistance) return;
     
     setIsGenerating(true);
-    onGenerate?.({
-      raceDistance: raceDistance as RaceDistance,
-      targetTime: targetTime || undefined
-    });
     
-    // TODO: Implement actual plan generation
-    setTimeout(() => {
+    try {
+      let stravaActivities = [];
+      
+      if (stravaAccessToken) {
+        try {
+          const activitiesResponse = await fetch('/api/strava/activities', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ accessToken: stravaAccessToken }),
+          });
+          
+          if (activitiesResponse.ok) {
+            const data = await activitiesResponse.json();
+            stravaActivities = data.activities;
+          }
+        } catch (error) {
+          console.warn('Failed to fetch Strava activities:', error);
+        }
+      }
+      
+      const planResponse = await fetch('/api/plans/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          raceDistance: raceDistance as RaceDistance,
+          targetTime: targetTime || undefined,
+          stravaActivities,
+        }),
+      });
+      
+      if (planResponse.ok) {
+        const data = await planResponse.json();
+        const plan = data.plan as TrainingPlan;
+        
+        saveTrainingPlan(plan);
+        onGenerate?.(plan);
+      } else {
+        throw new Error('Failed to generate plan');
+      }
+    } catch (error) {
+      console.error('Plan generation error:', error);
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
   };
 
   return (
@@ -47,7 +89,7 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
             <option value="">Select a distance</option>
             <option value="5k">5K</option>
             <option value="10k">10K</option>
-            <option value="half">Half Marathon</option>
+            <option value="half_marathon">Half Marathon</option>
             <option value="marathon">Marathon</option>
           </select>
         </div>

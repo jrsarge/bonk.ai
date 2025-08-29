@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/context';
+import { useApp } from '@/lib/auth/context';
 import { useEffect } from 'react';
 import { LoadingSpinner } from '@/components/ui';
 
@@ -15,24 +15,21 @@ export default function AuthGuard({
   fallback,
   redirectTo = '/' 
 }: AuthGuardProps) {
-  const { user, isLoading } = useAuth();
+  const { isStravaConnected } = useApp();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isStravaConnected) {
       window.location.href = redirectTo;
     }
-  }, [user, isLoading, redirectTo]);
+  }, [isStravaConnected, redirectTo]);
 
-  if (isLoading) {
+  if (!isStravaConnected) {
     return fallback || (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
+        <p className="ml-4">Redirecting to connect Strava...</p>
       </div>
     );
-  }
-
-  if (!user) {
-    return null; // Will redirect via useEffect
   }
 
   return <>{children}</>;

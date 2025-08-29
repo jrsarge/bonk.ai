@@ -1,9 +1,51 @@
 'use client';
 
+import { useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { LoadingSpinner } from '@/components/ui';
 import { StravaConnectButton } from '@/components/auth';
 
-export default function ConnectPage() {
+function ConnectPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const accessToken = searchParams.get('access_token');
+    const athleteData = searchParams.get('athlete');
+    const error = searchParams.get('error');
+
+    if (error) {
+      console.error('Strava connection error:', error);
+      return;
+    }
+
+    if (accessToken && athleteData) {
+      try {
+        const athlete = JSON.parse(athleteData);
+        
+        localStorage.setItem('strava_access_token', accessToken);
+        localStorage.setItem('strava_athlete', JSON.stringify(athlete));
+        
+        router.push('/dashboard');
+      } catch (error) {
+        console.error('Failed to parse athlete data:', error);
+      }
+    }
+  }, [searchParams, router]);
+
+  if (searchParams.get('access_token')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-lg font-medium text-gray-700">
+            Connecting your Strava account...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -108,5 +150,17 @@ export default function ConnectPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ConnectPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    }>
+      <ConnectPageContent />
+    </Suspense>
   );
 }

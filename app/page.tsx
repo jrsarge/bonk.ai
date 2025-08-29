@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { StravaConnectButton } from '@/components/auth';
-import { useAuth } from '@/lib/auth/context';
+import { useApp } from '@/lib/auth/context';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { isStravaConnected } = useApp();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -17,7 +17,7 @@ export default function Home() {
             </div>
             <span className="text-2xl font-bold text-gray-900 dark:text-white">bonk.ai</span>
           </div>
-          {user ? (
+          {isStravaConnected ? (
             <Link
               href="/dashboard"
               className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -42,7 +42,7 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            {user ? (
+            {isStravaConnected ? (
               <Link
                 href="/dashboard"
                 className="bg-primary text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"

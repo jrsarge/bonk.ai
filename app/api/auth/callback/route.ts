@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { stravaClient } from '@/lib/api/strava';
-import { createUser } from '@/lib/db/queries';
-import { createSession } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +9,6 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
-    // Handle OAuth errors
     if (error) {
       console.error('OAuth error:', error);
       return NextResponse.redirect(
@@ -19,7 +16,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate required parameters
     if (!code || !state) {
       console.error('Missing OAuth parameters:', { code: !!code, state: !!state });
       return NextResponse.redirect(
@@ -27,7 +23,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify state parameter for CSRF protection
     const cookieStore = await cookies();
     const storedState = cookieStore.get('oauth_state')?.value;
     
@@ -38,35 +33,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Clear state cookie
     cookieStore.delete('oauth_state');
 
-    // Exchange code for tokens
     const tokenResponse = await stravaClient.exchangeCodeForTokens(code);
-    
-    // Get athlete information
     const athlete = tokenResponse.athlete;
 
-    // Create or update user in database
-    const dbUser = await createUser({
-      id: athlete.id,
-      email: '', // Strava doesn't provide email in OAuth response
-      firstname: athlete.firstname,
-      lastname: athlete.lastname,
-      profile: athlete.profile,
-    });
+    const successUrl = new URL('/connect', request.url);
+    successUrl.searchParams.set('access_token', tokenResponse.access_token);
+    successUrl.searchParams.set('athlete', JSON.stringify(athlete));
 
-    // Create session
-    await createSession(
-      dbUser.id,
-      athlete.id,
-      tokenResponse.access_token,
-      tokenResponse.refresh_token,
-      tokenResponse.expires_at
-    );
-
-    // Redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(successUrl);
     
   } catch (error) {
     console.error('OAuth callback error:', error);
