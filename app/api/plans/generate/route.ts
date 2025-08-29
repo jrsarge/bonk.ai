@@ -1,15 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RaceDistance, TrainingPlan } from '@/types';
+import { TrainingPlan, PlanGenerationRequest, PlanGenerationResponse } from '@/types';
+import { anthropicClient } from '@/lib/api/anthropic';
+import { TrainingAnalyzer } from '@/lib/training/analysis';
+import { StravaActivity } from '@/types/strava';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { raceDistance, targetTime, stravaActivities } = body as {
-      raceDistance: RaceDistance;
+    const { 
+      raceDistance, 
+      targetTime, 
+      stravaActivities,
+      trainingDays = 5,
+      experience = 'intermediate',
+      currentMileage,
+      preferences
+    } = body as {
+      raceDistance: '5k' | '10k' | 'half' | 'marathon';
       targetTime?: string;
-      stravaActivities?: object[];
+      stravaActivities?: StravaActivity[];
+      trainingDays?: number;
+      experience?: 'beginner' | 'intermediate' | 'advanced';
+      currentMileage?: number;
+      preferences?: {
+        preferredWorkoutDays?: number[];
+        maxLongRunDistance?: number;
+        includeSpeedWork?: boolean;
+      };
     };
 
+    // Validate required fields
     if (!raceDistance) {
       return NextResponse.json(
         { error: 'Race distance is required' },
@@ -17,146 +37,94 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const planId = crypto.randomUUID();
-    const createdAt = new Date().toISOString();
+    const validDistances = ['5k', '10k', 'half', 'marathon'];
+    if (!validDistances.includes(raceDistance)) {
+      return NextResponse.json(
+        { error: 'Invalid race distance' },
+        { status: 400 }
+      );
+    }
 
-    const plan: TrainingPlan = {
-      id: planId,
+    // Analyze Strava data if provided
+    let stravaAnalysis = undefined;
+    if (stravaActivities && stravaActivities.length > 0) {
+      const analyzer = new TrainingAnalyzer(stravaActivities);
+      const analysis = analyzer.analyze();
+      
+      stravaAnalysis = {
+        weeklyMileage: analysis.totalDistance / 12, // Average weekly mileage over 12 weeks
+        averagePace: analysis.averagePace,
+        longestRun: analysis.longestRun,
+        runFrequency: analysis.runFrequency,
+        fitnessScore: analysis.fitnessScore,
+        paceDistribution: analysis.paceDistribution.map(zone => ({
+          zone: zone.zone,
+          percentage: zone.percentage,
+          minPace: zone.minPace,
+          maxPace: zone.maxPace
+        }))
+      };
+    }
+
+    // Build request for AI generation
+    const generationRequest: PlanGenerationRequest = {
       raceDistance,
       targetTime,
-      createdAt,
-      planData: generateBasicPlan(raceDistance, targetTime, stravaActivities),
+      trainingDays,
+      currentMileage: currentMileage || stravaAnalysis?.weeklyMileage || 20,
+      experience,
+      preferences
     };
 
-    return NextResponse.json({ plan });
+    // Generate plan using AI
+    const aiPlan = await anthropicClient.generateTrainingPlan({
+      raceDistance,
+      targetTime,
+      stravaAnalysis,
+      preferences: {
+        trainingDays,
+        experience,
+        currentMileage: generationRequest.currentMileage
+      }
+    });
+
+    // Create the final training plan object
+    const planId = crypto.randomUUID();
+    const plan: TrainingPlan = {
+      id: planId,
+      userId: 'anonymous', // TODO: Replace with actual user ID from session
+      raceDistance,
+      targetTime,
+      weeks: aiPlan.weeks.map(week => ({
+        ...week,
+        weekNumber: week.weekNumber,
+        startDate: week.startDate,
+        theme: week.theme,
+        description: week.description,
+        totalDistance: week.totalDistance,
+        keyWorkout: week.keyWorkout,
+        workouts: week.workouts
+      })),
+      generatedAt: new Date().toISOString(),
+      parameters: generationRequest,
+      summary: aiPlan.summary
+    };
+
+    const response: PlanGenerationResponse = {
+      success: true,
+      plan
+    };
+
+    return NextResponse.json(response);
     
   } catch (error) {
     console.error('Plan generation error:', error);
     
-    return NextResponse.json(
-      { error: 'Failed to generate training plan' },
-      { status: 500 }
-    );
-  }
-}
-
-function generateBasicPlan(raceDistance: RaceDistance, targetTime?: string, _activities?: object[]) {
-  const getWeeksForDistance = (distance: RaceDistance) => {
-    switch (distance) {
-      case '5k': return 8;
-      case '10k': return 10;
-      case 'half_marathon': return 12;
-      case 'marathon': return 16;
-      default: return 12;
-    }
-  };
-
-  const totalWeeks = getWeeksForDistance(raceDistance);
-  const weeks = [];
-  
-  for (let weekNum = 1; weekNum <= totalWeeks; weekNum++) {
-    const isRecoveryWeek = weekNum % 4 === 0;
-    const weekDistance = calculateWeekDistance(raceDistance, weekNum, totalWeeks, isRecoveryWeek);
+    const response: PlanGenerationResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate training plan'
+    };
     
-    weeks.push({
-      weekNumber: weekNum,
-      theme: getWeekTheme(weekNum, totalWeeks, isRecoveryWeek),
-      totalDistance: weekDistance,
-      workouts: generateWeekWorkouts(weekDistance, raceDistance, weekNum, totalWeeks)
-    });
+    return NextResponse.json(response, { status: 500 });
   }
-
-  return {
-    weeks,
-    summary: {
-      totalWeeks,
-      peakWeeklyMileage: Math.max(...weeks.map(w => w.totalDistance)),
-      description: `${totalWeeks}-week training plan for ${raceDistance}${targetTime ? ` with target time of ${targetTime}` : ''}`,
-    }
-  };
-}
-
-function calculateWeekDistance(raceDistance: RaceDistance, weekNum: number, totalWeeks: number, isRecoveryWeek: boolean) {
-  const baseDistances = {
-    '5k': { start: 15, peak: 25 },
-    '10k': { start: 20, peak: 35 },
-    'half_marathon': { start: 25, peak: 45 },
-    'marathon': { start: 30, peak: 60 }
-  };
-
-  const { start, peak } = baseDistances[raceDistance];
-  const buildPhase = Math.floor(totalWeeks * 0.7);
-  
-  if (weekNum <= buildPhase) {
-    const progress = weekNum / buildPhase;
-    const distance = start + (peak - start) * progress;
-    return isRecoveryWeek ? distance * 0.7 : distance;
-  } else {
-    const taperPhase = (weekNum - buildPhase) / (totalWeeks - buildPhase);
-    const distance = peak - (peak - start * 0.8) * taperPhase;
-    return Math.max(distance, start * 0.6);
-  }
-}
-
-function getWeekTheme(weekNum: number, totalWeeks: number, isRecoveryWeek: boolean) {
-  if (isRecoveryWeek) return 'Recovery Week';
-  if (weekNum <= 2) return 'Base Building';
-  if (weekNum <= Math.floor(totalWeeks * 0.6)) return 'Aerobic Development';
-  if (weekNum <= Math.floor(totalWeeks * 0.8)) return 'Peak Training';
-  return 'Race Preparation';
-}
-
-function generateWeekWorkouts(weekDistance: number, raceDistance: RaceDistance, weekNum: number, totalWeeks: number) {
-  const longRunDistance = Math.min(weekDistance * 0.4, raceDistance === 'marathon' ? 20 : 13);
-  const easyRunDistance = (weekDistance - longRunDistance) / 4;
-  
-  const workouts = [
-    {
-      day: 1,
-      type: 'easy' as const,
-      distance: easyRunDistance,
-      description: `Easy ${easyRunDistance.toFixed(1)} miles`,
-      pace: 'Conversational pace'
-    },
-    {
-      day: 2,
-      type: 'rest' as const,
-      description: 'Rest day or light cross-training'
-    },
-    {
-      day: 3,
-      type: weekNum > 2 && weekNum < totalWeeks - 2 ? 'tempo' as const : 'easy' as const,
-      distance: easyRunDistance,
-      description: weekNum > 2 && weekNum < totalWeeks - 2 
-        ? `Tempo run: ${easyRunDistance.toFixed(1)} miles`
-        : `Easy ${easyRunDistance.toFixed(1)} miles`,
-      pace: weekNum > 2 && weekNum < totalWeeks - 2 ? 'Comfortably hard' : 'Easy pace'
-    },
-    {
-      day: 4,
-      type: 'rest' as const,
-      description: 'Rest day'
-    },
-    {
-      day: 5,
-      type: 'easy' as const,
-      distance: easyRunDistance,
-      description: `Easy ${easyRunDistance.toFixed(1)} miles`,
-      pace: 'Easy pace'
-    },
-    {
-      day: 6,
-      type: 'long' as const,
-      distance: longRunDistance,
-      description: `Long run: ${longRunDistance.toFixed(1)} miles`,
-      pace: 'Easy to moderate pace'
-    },
-    {
-      day: 7,
-      type: 'rest' as const,
-      description: 'Rest day or easy walk'
-    }
-  ];
-
-  return workouts;
 }

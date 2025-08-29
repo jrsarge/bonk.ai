@@ -21,37 +21,92 @@ export interface TrainingAnalysis {
   recommendedRaceDistance: '5k' | '10k' | 'half' | 'marathon';
 }
 
-export type RaceDistance = '5k' | '10k' | 'half_marathon' | 'marathon';
+export type RaceDistance = '5k' | '10k' | 'half' | 'marathon';
 
 export interface TrainingPlan {
   id: string;
+  userId: string;
   raceDistance: RaceDistance;
   targetTime?: string;
-  planData: {
-    weeks: Week[];
-    summary: {
-      totalWeeks: number;
-      peakWeeklyMileage: number;
-      raceDate?: string;
-      description: string;
+  weeks: TrainingWeek[];
+  generatedAt: string;
+  parameters: PlanGenerationRequest;
+  summary: {
+    totalWeeks: number;
+    peakWeeklyMileage: number;
+    description: string;
+    paceRecommendations: {
+      easy: string;
+      tempo: string;
+      interval: string;
+      long: string;
     };
   };
-  createdAt: string;
 }
 
+export interface TrainingWeek {
+  weekNumber: number;
+  startDate: string;
+  theme: string;
+  description: string;
+  totalDistance: number;
+  keyWorkout?: string;
+  workouts: TrainingWorkout[];
+}
+
+export interface TrainingWorkout {
+  day: number;
+  date: string;
+  type: 'easy' | 'tempo' | 'interval' | 'long' | 'rest' | 'cross' | 'race';
+  name: string;
+  description: string;
+  distance?: number;
+  duration?: number;
+  targetPace?: string;
+  effortLevel: 1 | 2 | 3 | 4 | 5;
+  notes?: string;
+  completed?: boolean;
+}
+
+export interface PlanGenerationRequest {
+  raceDistance: RaceDistance;
+  targetTime?: string;
+  trainingDays: number;
+  currentMileage: number;
+  experience: 'beginner' | 'intermediate' | 'advanced';
+  preferences?: {
+    preferredWorkoutDays?: number[];
+    maxLongRunDistance?: number;
+    includeSpeedWork?: boolean;
+  };
+}
+
+export interface PlanGenerationResponse {
+  success: boolean;
+  plan?: TrainingPlan;
+  error?: string;
+}
+
+export interface StoredPlan {
+  plan: TrainingPlan;
+  createdAt: string;
+  lastViewed?: string;
+}
+
+// Legacy types for backward compatibility
 export interface Week {
   weekNumber: number;
   theme: string;
-  totalDistance: number; // changed from totalMiles to totalDistance for consistency
+  totalDistance: number;
   workouts: Workout[];
 }
 
 export interface Workout {
   day: number;
   type: 'easy' | 'tempo' | 'interval' | 'long' | 'rest' | 'cross';
-  distance?: number; // in miles
-  duration?: number; // in minutes
-  pace?: string; // e.g., "8:30"
+  distance?: number;
+  duration?: number;
+  pace?: string;
   description: string;
   notes?: string;
 }
