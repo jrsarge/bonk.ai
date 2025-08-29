@@ -5,7 +5,8 @@ export interface DbUser {
   id: string;
   strava_id: number;
   email: string | null;
-  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   profile_picture_url: string | null;
   created_at: Date;
   updated_at: Date;
@@ -16,7 +17,7 @@ export interface DbTrainingPlan {
   user_id: string;
   race_distance: RaceDistance;
   target_time: string | null;
-  plan_data: any;
+  plan_data: object;
   created_at: Date;
   updated_at: Date;
 }
@@ -28,14 +29,13 @@ export async function createUser(stravaUser: {
   lastname?: string;
   profile?: string;
 }): Promise<DbUser> {
-  const name = [stravaUser.firstname, stravaUser.lastname].filter(Boolean).join(' ') || null;
-  
   const result = await sql`
-    INSERT INTO users (strava_id, email, name, profile_picture_url)
-    VALUES (${stravaUser.id}, ${stravaUser.email || null}, ${name}, ${stravaUser.profile || null})
+    INSERT INTO users (strava_id, email, first_name, last_name, profile_picture_url)
+    VALUES (${stravaUser.id}, ${stravaUser.email || null}, ${stravaUser.firstname || null}, ${stravaUser.lastname || null}, ${stravaUser.profile || null})
     ON CONFLICT (strava_id) DO UPDATE SET
       email = EXCLUDED.email,
-      name = EXCLUDED.name,
+      first_name = EXCLUDED.first_name,
+      last_name = EXCLUDED.last_name,
       profile_picture_url = EXCLUDED.profile_picture_url,
       updated_at = CURRENT_TIMESTAMP
     RETURNING *
@@ -64,7 +64,7 @@ export async function createTrainingPlan(plan: {
   userId: string;
   raceDistance: RaceDistance;
   targetTime?: string;
-  planData: any;
+  planData: object;
 }): Promise<DbTrainingPlan> {
   const result = await sql`
     INSERT INTO training_plans (user_id, race_distance, target_time, plan_data)

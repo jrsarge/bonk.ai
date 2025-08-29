@@ -17,10 +17,8 @@ export default function StravaConnectButton({
     setIsConnecting(true);
     onConnect?.();
     
-    // TODO: Implement actual Strava OAuth flow
-    setTimeout(() => {
-      setIsConnecting(false);
-    }, 2000);
+    // Redirect to Strava OAuth flow
+    window.location.href = '/api/auth/strava';
   };
 
   return (

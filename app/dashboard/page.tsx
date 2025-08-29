@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { AuthGuard, UserProfile } from '@/components/auth';
+import { useAuth } from '@/lib/auth/context';
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="container mx-auto px-4 py-4">
@@ -20,10 +24,11 @@ export default function Dashboard() {
             </Link>
             
             <div className="flex items-center space-x-4">
-              <button className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                Profile
-              </button>
-              <button className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+              <UserProfile user={user} />
+              <button 
+                onClick={logout}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
                 Logout
               </button>
             </div>
@@ -35,7 +40,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome back, Runner!
+            Welcome back{user?.firstName ? `, ${user.firstName}` : ''}!
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Ready to create your personalized training plan?
@@ -152,6 +157,7 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

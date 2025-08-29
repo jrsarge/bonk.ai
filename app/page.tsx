@@ -1,6 +1,11 @@
+'use client';
+
 import Link from 'next/link';
+import { StravaConnectButton } from '@/components/auth';
+import { useAuth } from '@/lib/auth/context';
 
 export default function Home() {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -12,12 +17,16 @@ export default function Home() {
             </div>
             <span className="text-2xl font-bold text-gray-900 dark:text-white">bonk.ai</span>
           </div>
-          <Link
-            href="/connect"
-            className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Connect with Strava
-          </Link>
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <StravaConnectButton />
+          )}
         </nav>
       </header>
 
@@ -33,15 +42,16 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Link
-              href="/connect"
-              className="bg-primary text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.599h4.172L10.463 0l-7 13.828h4.916"/>
-              </svg>
-              <span>Start with Strava</span>
-            </Link>
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="bg-primary text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <StravaConnectButton className="px-8 py-4 text-lg" />
+            )}
             <Link
               href="#features"
               className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"

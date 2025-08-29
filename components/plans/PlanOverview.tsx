@@ -20,7 +20,7 @@ export default function PlanOverview({ plan, className = '' }: PlanOverviewProps
       </div>
 
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-        {plan.weeks.map((week) => (
+        {plan.planData.weeks.map((week) => (
           <div
             key={week.weekNumber}
             className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
@@ -48,7 +48,7 @@ export default function PlanOverview({ plan, className = '' }: PlanOverviewProps
               Total Weeks
             </div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {plan.weeks.length}
+              {plan.planData.weeks.length}
             </div>
           </div>
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -56,7 +56,7 @@ export default function PlanOverview({ plan, className = '' }: PlanOverviewProps
               Peak Week
             </div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {Math.max(...plan.weeks.map(w => w.totalDistance)).toFixed(0)} mi
+              {Math.max(...plan.planData.weeks.map(w => w.totalDistance)).toFixed(0)} mi
             </div>
           </div>
         </div>

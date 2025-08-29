@@ -3,10 +3,20 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   strava_id BIGINT UNIQUE NOT NULL,
   email VARCHAR(255),
-  name VARCHAR(255),
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
   profile_picture_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Sessions table for secure session management
+CREATE TABLE IF NOT EXISTS sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_token VARCHAR(255) UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Training plans table for storing AI-generated training plans
@@ -22,6 +32,9 @@ CREATE TABLE IF NOT EXISTS training_plans (
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_strava_id ON users(strava_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_training_plans_user_id ON training_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_training_plans_race_distance ON training_plans(race_distance);
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);

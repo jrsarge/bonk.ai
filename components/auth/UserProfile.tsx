@@ -23,7 +23,7 @@ export default function UserProfile({ user, className = '' }: UserProfileProps) 
       ) : (
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
           <span className="text-white font-semibold text-sm">
-            {user.firstName[0]}{user.lastName[0]}
+            {user.firstName?.[0] || ''}{user.lastName?.[0] || ''}
           </span>
         </div>
       )}
