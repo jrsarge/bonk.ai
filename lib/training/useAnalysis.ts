@@ -34,7 +34,12 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
         const parsed = JSON.parse(cachedAnalysis);
         setAnalysis({
           ...parsed,
-          lastUpdated: new Date(parsed.lastUpdated)
+          lastUpdated: new Date(parsed.lastUpdated),
+          weeklyMileage: parsed.weeklyMileage.map((week: { weekStart: string; weekEnd: string; totalDistance: number; runCount: number }) => ({
+            ...week,
+            weekStart: new Date(week.weekStart),
+            weekEnd: new Date(week.weekEnd)
+          }))
         });
       }
 

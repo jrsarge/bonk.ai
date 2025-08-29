@@ -73,8 +73,8 @@ export class AnthropicClient {
     
     try {
       const response = await this.client.messages.create({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 4000,
+        model: 'claude-3-7-sonnet-20250219',
+        max_tokens: 16000,
         temperature: 0.3,
         messages: [
           {
@@ -193,9 +193,46 @@ IMPORTANT: Return only the JSON object, no additional text or formatting.`;
       }
       
       const jsonStr = response.slice(jsonStart, jsonEnd);
-      return JSON.parse(jsonStr);
-    } catch {
-      console.error('Error parsing Claude response:', response);
+      
+      // Check for potential truncation by looking for incomplete JSON structure
+      const openBraces = (jsonStr.match(/\{/g) || []).length;
+      const closeBraces = (jsonStr.match(/\}/g) || []).length;
+      const openBrackets = (jsonStr.match(/\[/g) || []).length;
+      const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+      
+      if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+        console.error('JSON structure mismatch detected:', {
+          openBraces,
+          closeBraces,
+          openBrackets,
+          closeBrackets,
+          responseLength: response.length,
+          jsonLength: jsonStr.length
+        });
+        throw new Error(`Response appears to be truncated - mismatched JSON brackets (braces: ${openBraces}/${closeBraces}, brackets: ${openBrackets}/${closeBrackets})`);
+      }
+      
+      const parsed = JSON.parse(jsonStr);
+      
+      // Additional validation to ensure we have a complete plan structure
+      if (!parsed.weeks || !Array.isArray(parsed.weeks) || parsed.weeks.length === 0) {
+        throw new Error('Response missing required weeks data');
+      }
+      
+      // Check if we have fewer than expected weeks, which might indicate truncation
+      if (parsed.weeks.length < 12) {
+        console.warn(`Training plan only has ${parsed.weeks.length} weeks instead of expected 12`);
+      }
+      
+      return parsed;
+    } catch (error) {
+      console.error('Error parsing Claude response (first 500 chars):', response.substring(0, 500));
+      console.error('Error parsing Claude response (last 500 chars):', response.substring(Math.max(0, response.length - 500)));
+      console.error('Parse error details:', error);
+      
+      if (error instanceof Error) {
+        throw new Error(`Failed to parse training plan: ${error.message}`);
+      }
       throw new Error('Failed to parse training plan from AI response');
     }
   }
