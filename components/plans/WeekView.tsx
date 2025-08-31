@@ -1,53 +1,186 @@
-import { Week } from '@/types';
+'use client';
+
+import { TrainingPlan, TrainingWeek } from '@/types';
+import WorkoutCard from './WorkoutCard';
 
 interface WeekViewProps {
-  week: Week;
+  plan: TrainingPlan;
   weekNumber: number;
+  onDaySelect?: (dayNumber: number) => void;
+  onBackToOverview?: () => void;
+  className?: string;
 }
 
-export default function WeekView({ week, weekNumber }: WeekViewProps) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-      <div className="mb-4">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Week {weekNumber}: {week.theme}
-        </h3>
-      </div>
+const getWeekProgress = (week: TrainingWeek): { completed: number; total: number; percentage: number } => {
+  const workouts = week.workouts.filter(w => w.type !== 'rest');
+  const completed = workouts.filter(w => w.completed).length;
+  const total = workouts.length;
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  return { completed, total, percentage };
+};
 
-      <div className="grid gap-4">
-        {week.workouts.map((workout, index) => (
-          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="font-medium text-gray-900 dark:text-white">
-                Day {workout.day}
-              </h4>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                workout.type === 'rest' ? 'bg-gray-100 text-gray-800' :
-                workout.type === 'easy' ? 'bg-green-100 text-green-800' :
-                workout.type === 'tempo' ? 'bg-orange-100 text-orange-800' :
-                workout.type === 'interval' ? 'bg-red-100 text-red-800' :
-                'bg-blue-100 text-blue-800'
-              }`}>
-                {workout.type.charAt(0).toUpperCase() + workout.type.slice(1)}
+export default function WeekView({ 
+  plan, 
+  weekNumber, 
+  onDaySelect, 
+  onBackToOverview,
+  className = '' 
+}: WeekViewProps) {
+  const week = plan.weeks.find(w => w.weekNumber === weekNumber);
+  
+  if (!week) {
+    return (
+      <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center ${className}`}>
+        <div className="text-gray-500 dark:text-gray-400">
+          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-lg font-medium mb-2">Week not found</p>
+          <p className="text-sm">Unable to find week {weekNumber} in this training plan.</p>
+          {onBackToOverview && (
+            <button
+              onClick={onBackToOverview}
+              className="mt-4 text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Return to plan overview
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const progress = getWeekProgress(week);
+  const startDate = new Date(week.startDate);
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 6);
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      {/* Week header */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Week {weekNumber}: {week.theme}
+              </h2>
+              {week.keyWorkout && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                  Key Week
+                </span>
+              )}
+            </div>
+            
+            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
+              <p>
+                <strong>Dates:</strong> {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+              </p>
+              <p>
+                <strong>Total Distance:</strong> {week.totalDistance.toFixed(1)} miles
+              </p>
+              {week.keyWorkout && (
+                <p>
+                  <strong>Key Workout:</strong> {week.keyWorkout}
+                </p>
+              )}
+            </div>
+            
+            {week.description && (
+              <p className="mt-3 text-gray-700 dark:text-gray-300">
+                {week.description}
+              </p>
+            )}
+          </div>
+
+          {/* Week progress */}
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-w-[200px]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Week Progress
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {progress.completed}/{progress.total} workouts
               </span>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
-              {workout.description}
-            </p>
-            <div className="flex space-x-4 text-sm">
-              {workout.distance && (
-                <span className="text-gray-500 dark:text-gray-400">
-                  Distance: {workout.distance} miles
-                </span>
-              )}
-              {workout.pace && (
-                <span className="text-gray-500 dark:text-gray-400">
-                  Pace: {workout.pace}
-                </span>
-              )}
+            
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-2">
+              <div
+                className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-300"
+                style={{ width: `${progress.percentage}%` }}
+              />
+            </div>
+            
+            <div className="text-center">
+              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                {progress.percentage}%
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
+                complete
+              </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Workout grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {week.workouts.map((workout) => (
+          <div
+            key={workout.day}
+            className={`transition-all duration-200 ${
+              onDaySelect ? 'hover:scale-[1.02] cursor-pointer' : ''
+            }`}
+            onClick={() => onDaySelect?.(workout.day)}
+          >
+            <WorkoutCard
+              workout={workout}
+              planId={plan.id}
+              weekNumber={weekNumber}
+              className={`h-full ${onDaySelect ? 'hover:shadow-lg' : ''}`}
+            />
+          </div>
         ))}
+      </div>
+
+      {/* Quick stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+            {week.workouts.filter(w => w.type === 'easy').length}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Easy Runs
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+            {week.workouts.filter(w => w.type === 'tempo').length}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Tempo
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+          <div className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
+            {week.workouts.filter(w => w.type === 'interval').length}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Intervals
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+            {week.workouts.filter(w => w.type === 'long').length}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Long Runs
+          </div>
+        </div>
       </div>
     </div>
   );

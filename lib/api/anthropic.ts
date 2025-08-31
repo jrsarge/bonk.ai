@@ -73,7 +73,7 @@ export class AnthropicClient {
     
     try {
       const response = await this.client.messages.create({
-        model: 'claude-3-7-sonnet-20250219',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 16000,
         temperature: 0.3,
         messages: [
