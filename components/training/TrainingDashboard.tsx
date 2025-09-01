@@ -7,7 +7,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MetricsGrid } from './MetricsGrid';
 import { WeeklyChart } from './WeeklyChart';
 import { PaceDistribution } from './PaceDistribution';
-import { RecentActivities } from './RecentActivities';
 import { useApp } from '@/lib/auth/context';
 
 export function TrainingDashboard() {
@@ -139,8 +138,6 @@ export function TrainingDashboard() {
         </div>
       </Card>
 
-      {/* Recent Activities */}
-      <RecentActivities activities={activities.slice(0, 10)} />
     </div>
   );
 }

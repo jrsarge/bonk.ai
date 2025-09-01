@@ -35,7 +35,7 @@ export class TrainingAnalyzer {
 
   constructor(activities: StravaActivity[]) {
     this.activities = activities.filter(activity => 
-      (activity.sport_type === 'Run' || activity.type === 'Run') && 
+      (activity.sport_type === 'Run' || activity.sport_type === 'TrailRun' || activity.type === 'Run' || activity.type === 'TrailRun') && 
       activity.distance > 0 && 
       activity.moving_time > 0
     );
@@ -91,11 +91,13 @@ export class TrainingAnalyzer {
     this.activities.forEach(activity => {
       const activityDate = new Date(activity.start_date);
       const weekStart = this.getWeekStart(activityDate);
-      const weekKey = weekStart.toISOString().split('T')[0];
+      // Create a more specific key using year, month, and date to avoid collisions
+      const weekKey = `${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`;
       
       if (!weeks.has(weekKey)) {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
         weeks.set(weekKey, {
           activities: [],
           weekStart,
@@ -282,7 +284,10 @@ export class TrainingAnalyzer {
     const d = new Date(date);
     const day = d.getDay();
     const diff = d.getDate() - day;
-    return new Date(d.setDate(diff));
+    const weekStart = new Date(d.getFullYear(), d.getMonth(), diff);
+    // Reset time to start of day to ensure consistent week boundaries
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
   }
 
   private calculatePaceVariation(): number {
