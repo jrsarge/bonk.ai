@@ -49,13 +49,13 @@ export default function WeeklyMileageChart({ weeks, className = '' }: WeeklyMile
   });
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg p-6 ${className}`}>
+    <div className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 ${className}`}>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Weekly Mileage Progression
       </h3>
       
-      <div className="w-full overflow-x-auto">
-        <svg width={chartWidth} height={chartHeight} className="max-w-full h-auto">
+      <div className="w-full overflow-x-auto flex justify-center">
+        <svg width={chartWidth} height={chartHeight} className="bg-white dark:bg-gray-700 rounded-lg">
           {/* Grid lines */}
           <defs>
             <pattern id="grid" width="1" height="1" patternUnits="userSpaceOnUse">
@@ -229,24 +229,24 @@ export default function WeeklyMileageChart({ weeks, className = '' }: WeeklyMile
             <g>
               {/* Tooltip background */}
               <rect
-                x={points[hoveredPoint].x - 45}
-                y={points[hoveredPoint].y - 45}
-                width="90"
-                height="28"
+                x={points[hoveredPoint].x - 55}
+                y={points[hoveredPoint].y - 55}
+                width="110"
+                height="40"
                 fill="rgb(17, 24, 39)"
                 stroke="rgb(37, 99, 235)"
                 strokeWidth="1"
-                rx="6"
+                rx="8"
                 className="drop-shadow-lg"
               />
               
               {/* Week number */}
               <text
                 x={points[hoveredPoint].x}
-                y={points[hoveredPoint].y - 30}
+                y={points[hoveredPoint].y - 38}
                 textAnchor="middle"
                 className="fill-white font-semibold"
-                style={{ fontSize: '12px' }}
+                style={{ fontSize: '13px' }}
               >
                 Week {points[hoveredPoint].week.weekNumber}
               </text>
@@ -254,17 +254,17 @@ export default function WeeklyMileageChart({ weeks, className = '' }: WeeklyMile
               {/* Mileage */}
               <text
                 x={points[hoveredPoint].x}
-                y={points[hoveredPoint].y - 17}
+                y={points[hoveredPoint].y - 22}
                 textAnchor="middle"
                 className="fill-blue-300"
-                style={{ fontSize: '13px' }}
+                style={{ fontSize: '14px' }}
               >
                 {points[hoveredPoint].week.totalDistance.toFixed(1)} miles
               </text>
               
               {/* Tooltip arrow pointing to data point */}
               <polygon
-                points={`${points[hoveredPoint].x-5},${points[hoveredPoint].y-17} ${points[hoveredPoint].x+5},${points[hoveredPoint].y-17} ${points[hoveredPoint].x},${points[hoveredPoint].y-12}`}
+                points={`${points[hoveredPoint].x-6},${points[hoveredPoint].y-15} ${points[hoveredPoint].x+6},${points[hoveredPoint].y-15} ${points[hoveredPoint].x},${points[hoveredPoint].y-9}`}
                 fill="rgb(17, 24, 39)"
               />
             </g>
