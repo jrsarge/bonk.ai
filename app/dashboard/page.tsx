@@ -101,6 +101,10 @@ export default function Dashboard() {
     return plan.customName || formatRaceDistance(plan.raceDistance);
   };
 
+  const getPlanTitle = (plan: TrainingPlan): string => {
+    return plan.customName || `${formatRaceDistance(plan.raceDistance)} Training Plan`;
+  };
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -187,10 +191,61 @@ export default function Dashboard() {
           {activeTab === 'current' && selectedPlan && (
             <div className="space-y-6">
               <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    {getPlanDisplayName(selectedPlan)} Training Plan
-                  </h2>
+                <div className="flex-1">
+                  {editingPlan === selectedPlan.id ? (
+                    <div className="flex items-center space-x-3 mb-2">
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveRename(selectedPlan.id);
+                          } else if (e.key === 'Escape') {
+                            handleCancelRename();
+                          }
+                        }}
+                        className="text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none text-gray-900 dark:text-white"
+                        placeholder="Enter plan name"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleSaveRename(selectedPlan.id)}
+                        className="text-green-600 hover:text-green-700 p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={handleCancelRename}
+                        className="text-red-600 hover:text-red-700 p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-3 mb-2 group">
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {getPlanTitle(selectedPlan)}
+                      </h2>
+                      <button
+                        onClick={() => handleStartRename(selectedPlan.id, selectedPlan.customName)}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  {!selectedPlan.customName && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      {formatRaceDistance(selectedPlan.raceDistance)}
+                    </p>
+                  )}
                   <p className="text-gray-600 dark:text-gray-300">
                     Generated {new Date(selectedPlan.generatedAt).toLocaleDateString()}
                   </p>
