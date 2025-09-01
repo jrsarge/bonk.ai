@@ -14,7 +14,6 @@ export default function PlanExport({ plan, className = '' }: PlanExportProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     format: 'text',
-    includeCompleted: true,
     includeNotes: true
   });
   const [successMessage, setSuccessMessage] = useState('');
@@ -151,17 +150,6 @@ export default function PlanExport({ plan, className = '' }: PlanExportProps) {
               Include Options
             </label>
             <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={exportOptions.includeCompleted}
-                  onChange={(e) => setExportOptions({ ...exportOptions, includeCompleted: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Include completion status
-                </span>
-              </label>
               <label className="flex items-center">
                 <input
                   type="checkbox"

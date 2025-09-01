@@ -162,59 +162,16 @@ export class PlanStorage {
   }
 
   /**
-   * Mark a workout as completed
-   */
-  markWorkoutCompleted(planId: string, weekNumber: number, workoutDay: number): void {
-    const storage = this.getStorage();
-    if (!storage) return;
-
-    try {
-      const plans = this.getAllPlans();
-      const updatedPlans = plans.map(storedPlan => {
-        if (storedPlan.plan.id === planId) {
-          const updatedWeeks = storedPlan.plan.weeks.map(week => {
-            if (week.weekNumber === weekNumber) {
-              const updatedWorkouts = week.workouts.map(workout => {
-                if (workout.day === workoutDay) {
-                  return { ...workout, completed: true };
-                }
-                return workout;
-              });
-              return { ...week, workouts: updatedWorkouts };
-            }
-            return week;
-          });
-          
-          return {
-            ...storedPlan,
-            plan: { ...storedPlan.plan, weeks: updatedWeeks },
-            lastViewed: new Date().toISOString()
-          };
-        }
-        return storedPlan;
-      });
-
-      storage.setItem(STORAGE_KEYS.PLANS, JSON.stringify(updatedPlans));
-    } catch (error) {
-      console.error('Failed to mark workout as completed:', error);
-    }
-  }
-
-  /**
-   * Get plan statistics
+   * Get basic plan statistics
    */
   getPlanStats(planId: string): {
     totalWorkouts: number;
-    completedWorkouts: number;
-    completionPercentage: number;
     currentWeek: number;
   } {
     const storedPlan = this.getPlan(planId);
     if (!storedPlan) {
       return {
         totalWorkouts: 0,
-        completedWorkouts: 0,
-        completionPercentage: 0,
         currentWeek: 1
       };
     }
@@ -224,13 +181,6 @@ export class PlanStorage {
       total + week.workouts.filter(w => w.type !== 'rest').length, 0
     );
 
-    const completedWorkouts = plan.weeks.reduce((total, week) =>
-      total + week.workouts.filter(w => w.completed && w.type !== 'rest').length, 0
-    );
-
-    const completionPercentage = totalWorkouts > 0 ? 
-      Math.round((completedWorkouts / totalWorkouts) * 100) : 0;
-
     // Determine current week based on start date
     const planStartDate = new Date(plan.weeks[0]?.startDate || plan.generatedAt);
     const today = new Date();
@@ -239,10 +189,40 @@ export class PlanStorage {
 
     return {
       totalWorkouts,
-      completedWorkouts,
-      completionPercentage,
       currentWeek
     };
+  }
+
+  /**
+   * Rename a training plan
+   */
+  renamePlan(planId: string, customName: string): void {
+    const storage = this.getStorage();
+    if (!storage) return;
+
+    try {
+      const plans = this.getAllPlans();
+      const updatedPlans = plans.map(storedPlan => {
+        if (storedPlan.plan.id === planId) {
+          return {
+            ...storedPlan,
+            plan: { ...storedPlan.plan, customName },
+            lastViewed: new Date().toISOString()
+          };
+        }
+        return storedPlan;
+      });
+
+      storage.setItem(STORAGE_KEYS.PLANS, JSON.stringify(updatedPlans));
+
+      // Update active plan if it's the one being renamed
+      const activePlan = this.getActivePlan();
+      if (activePlan && activePlan.id === planId) {
+        this.setActivePlan({ ...activePlan, customName });
+      }
+    } catch (error) {
+      console.error('Failed to rename plan:', error);
+    }
   }
 
   /**

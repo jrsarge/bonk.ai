@@ -28,6 +28,7 @@ export interface TrainingPlan {
   userId: string;
   raceDistance: RaceDistance;
   targetTime?: string;
+  customName?: string;
   weeks: TrainingWeek[];
   generatedAt: string;
   parameters: PlanGenerationRequest;
@@ -65,7 +66,6 @@ export interface TrainingWorkout {
   targetPace?: string;
   effortLevel: 1 | 2 | 3 | 4 | 5;
   notes?: string;
-  completed?: boolean;
 }
 
 export interface PlanGenerationRequest {

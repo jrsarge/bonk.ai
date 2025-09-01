@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       trainingDays = 5,
       experience = 'intermediate',
       currentMileage,
+      datePreferences,
       preferences
     } = body as {
       raceDistance: '5k' | '10k' | 'half' | 'marathon';
@@ -22,6 +23,11 @@ export async function POST(request: NextRequest) {
       trainingDays?: number;
       experience?: 'beginner' | 'intermediate' | 'advanced';
       currentMileage?: number;
+      datePreferences?: {
+        mode: 'auto' | 'start' | 'end';
+        startDate?: string;
+        endDate?: string;
+      };
       preferences?: {
         preferredWorkoutDays?: number[];
         maxLongRunDistance?: number;
@@ -81,6 +87,7 @@ export async function POST(request: NextRequest) {
       raceDistance,
       targetTime,
       stravaAnalysis,
+      datePreferences,
       preferences: {
         trainingDays,
         experience,

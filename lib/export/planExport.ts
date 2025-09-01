@@ -2,7 +2,6 @@ import { TrainingPlan } from '@/types';
 
 export interface ExportOptions {
   format: 'json' | 'csv' | 'ical' | 'text' | 'pdf';
-  includeCompleted?: boolean;
   includeNotes?: boolean;
 }
 
@@ -320,9 +319,6 @@ export class PlanExporter {
           html += `<div class="notes">💡 ${workout.notes}</div>`;
         }
 
-        if (options.includeCompleted && workout.completed) {
-          html += `<div style="color: #059669; font-weight: bold; margin-top: 10px;">✓ Completed</div>`;
-        }
 
         html += `
             </div>
@@ -371,9 +367,6 @@ export class PlanExporter {
       headers.push('Notes');
     }
 
-    if (options.includeCompleted) {
-      headers.push('Completed');
-    }
 
     const rows = [headers.join(',')];
 
@@ -396,9 +389,6 @@ export class PlanExporter {
           row.push(`"${workout.notes || ''}"`);
         }
 
-        if (options.includeCompleted) {
-          row.push(workout.completed ? 'Yes' : 'No');
-        }
 
         rows.push(row.join(','));
       });
@@ -510,9 +500,6 @@ export class PlanExporter {
           text += `    Notes: ${workout.notes}\n`;
         }
         
-        if (options.includeCompleted) {
-          text += `    Completed: ${workout.completed ? 'Yes' : 'No'}\n`;
-        }
         
         text += '\n';
       });
@@ -609,8 +596,7 @@ export class PlanExporter {
   static async copyToClipboard(plan: TrainingPlan): Promise<void> {
     const text = this.exportText(plan, { 
       format: 'text',
-      includeNotes: true,
-      includeCompleted: false 
+      includeNotes: true
     });
 
     if (navigator.clipboard) {

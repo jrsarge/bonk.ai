@@ -16,6 +16,9 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
   const [trainingDays, setTrainingDays] = useState(5);
   const [experience, setExperience] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
   const [currentMileage, setCurrentMileage] = useState('');
+  const [dateMode, setDateMode] = useState<'auto' | 'start' | 'end'>('auto');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState('');
   const [error, setError] = useState('');
@@ -68,6 +71,11 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
           trainingDays,
           experience,
           currentMileage: currentMileage ? parseInt(currentMileage) : undefined,
+          datePreferences: {
+            mode: dateMode,
+            startDate: customStartDate || undefined,
+            endDate: customEndDate || undefined
+          },
           preferences: {
             includeSpeedWork: true
           }
@@ -193,6 +201,90 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Leave blank to use Strava data analysis
           </p>
+        </div>
+
+        <div>
+          <label htmlFor="dateMode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Plan Timing
+          </label>
+          <div className="space-y-3">
+            <div className="flex space-x-3">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="dateMode"
+                  value="auto"
+                  checked={dateMode === 'auto'}
+                  onChange={(e) => setDateMode(e.target.value as 'auto')}
+                  className="text-blue-600 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  Auto (starts next Monday)
+                </span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="dateMode"
+                  value="start"
+                  checked={dateMode === 'start'}
+                  onChange={(e) => setDateMode(e.target.value as 'start')}
+                  className="text-blue-600 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  Choose start date
+                </span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="dateMode"
+                  value="end"
+                  checked={dateMode === 'end'}
+                  onChange={(e) => setDateMode(e.target.value as 'end')}
+                  className="text-blue-600 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  Choose race/goal date
+                </span>
+              </label>
+            </div>
+            
+            {dateMode === 'start' && (
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Plan Start Date
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            )}
+            
+            {dateMode === 'end' && (
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Race/Goal Date (plan ends here)
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  min={new Date(new Date().getTime() + 12 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Plan will work backwards from this date (minimum 12 weeks from now)
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         <button

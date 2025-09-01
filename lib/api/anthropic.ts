@@ -20,6 +20,11 @@ export interface PlanGenerationPromptData {
       maxPace: number;
     }>;
   };
+  datePreferences?: {
+    mode: 'auto' | 'start' | 'end';
+    startDate?: string;
+    endDate?: string;
+  };
   preferences?: {
     trainingDays?: number;
     experience?: 'beginner' | 'intermediate' | 'advanced';
@@ -99,7 +104,39 @@ export class AnthropicClient {
   }
 
   private buildPrompt(data: PlanGenerationPromptData): string {
-    const { raceDistance, targetTime, stravaAnalysis, preferences } = data;
+    const { raceDistance, targetTime, stravaAnalysis, datePreferences, preferences } = data;
+    
+    // Calculate start date based on user preferences
+    let startDateStr: string;
+    let planningNotes: string = '';
+    
+    if (datePreferences?.mode === 'start' && datePreferences.startDate) {
+      // Use custom start date
+      startDateStr = datePreferences.startDate;
+      planningNotes = `Plan starts on ${startDateStr} as requested by user.`;
+    } else if (datePreferences?.mode === 'end' && datePreferences.endDate) {
+      // Calculate start date by working backwards from end date
+      const endDate = new Date(datePreferences.endDate);
+      const startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - (12 * 7 - 1)); // 12 weeks minus 1 day
+      startDateStr = startDate.toISOString().split('T')[0];
+      planningNotes = `Plan ends on ${datePreferences.endDate} (race/goal date). Plan calculated to start on ${startDateStr}.`;
+    } else {
+      // Default: auto mode - use next Monday
+      const today = new Date();
+      const nextMonday = new Date(today);
+      const daysUntilMonday = (1 + 7 - today.getDay()) % 7;
+      if (daysUntilMonday === 0 && today.getDay() !== 1) {
+        nextMonday.setDate(today.getDate() + 7);
+      } else {
+        nextMonday.setDate(today.getDate() + daysUntilMonday);
+      }
+      startDateStr = nextMonday.toISOString().split('T')[0];
+      planningNotes = `Plan starts on ${startDateStr} (next Monday - auto mode).`;
+    }
+    
+    // Calculate example workout date (same as start date for day 1)
+    const exampleDate = startDateStr;
     
     return `You are an expert running coach creating a personalized 12-week training plan. Generate a comprehensive training plan in JSON format.
 
@@ -121,17 +158,21 @@ ${preferences ? `
 ` : ''}
 
 TRAINING PLAN REQUIREMENTS:
+${planningNotes}
 1. Exactly 12 weeks with proper periodization
-2. Include base building, peak training, and taper phases
-3. Progressive weekly mileage with appropriate recovery weeks (every 4th week)
-4. Race-specific workouts based on distance:
+2. Start date should be ${startDateStr} for Week 1
+3. Each subsequent week starts 7 days later
+4. Individual workout dates should be calculated from the week start date
+5. Include base building, peak training, and taper phases
+6. Progressive weekly mileage with appropriate recovery weeks (every 4th week)
+7. Race-specific workouts based on distance:
    - 5K: Speed/VO2max focus, intervals, tempo runs
    - 10K: Speed + aerobic balance, threshold work  
    - Half Marathon: Tempo emphasis, progressive long runs
    - Marathon: Aerobic base, long runs up to 20+ miles
-5. Realistic pace recommendations based on current fitness
-6. Include rest days and cross-training options
-7. Injury prevention focus - don't increase mileage too aggressively
+8. Realistic pace recommendations based on current fitness
+9. Include rest days and cross-training options
+10. Injury prevention focus - don't increase mileage too aggressively
 
 PACE ZONES (estimate based on current data):
 ${stravaAnalysis ? `
@@ -146,7 +187,7 @@ Return ONLY valid JSON in this exact format:
   "weeks": [
     {
       "weekNumber": 1,
-      "startDate": "2024-01-01",
+      "startDate": "${startDateStr}",
       "theme": "Base Building",
       "description": "Focus on building aerobic base with easy miles",
       "totalDistance": 25,
@@ -154,7 +195,7 @@ Return ONLY valid JSON in this exact format:
       "workouts": [
         {
           "day": 1,
-          "date": "2024-01-01", 
+          "date": "${exampleDate}", 
           "type": "easy",
           "name": "Easy Run",
           "description": "4 miles at conversational pace",
@@ -250,22 +291,49 @@ IMPORTANT: Return only the JSON object, no additional text or formatting.`;
       throw new Error('Plan must be exactly 12 weeks');
     }
 
+    // Calculate proper start dates for fallback
+    const getNextMonday = () => {
+      const today = new Date();
+      const nextMonday = new Date(today);
+      const daysUntilMonday = (1 + 7 - today.getDay()) % 7;
+      if (daysUntilMonday === 0 && today.getDay() !== 1) {
+        nextMonday.setDate(today.getDate() + 7);
+      } else {
+        nextMonday.setDate(today.getDate() + daysUntilMonday);
+      }
+      return nextMonday;
+    };
+
+    const baseStartDate = getNextMonday();
+
     // Ensure all required fields are present and properly formatted
     const validatedPlan: AIGeneratedPlan = {
       weeks: planData.weeks.map((week: unknown, index: number) => {
         const weekData = week as Record<string, unknown>;
+        
+        // Calculate fallback start date for this week
+        const fallbackStartDate = new Date(baseStartDate);
+        fallbackStartDate.setDate(baseStartDate.getDate() + (index * 7));
+        
         return {
           weekNumber: index + 1,
-          startDate: (weekData.startDate as string) || new Date().toISOString().split('T')[0],
+          startDate: (weekData.startDate as string) || fallbackStartDate.toISOString().split('T')[0],
           theme: (weekData.theme as string) || 'Training Week',
           description: (weekData.description as string) || '',
           totalDistance: Math.max((weekData.totalDistance as number) || 0, 0),
           keyWorkout: weekData.keyWorkout as string | undefined,
           workouts: Array.isArray(weekData.workouts) ? weekData.workouts.map((workout: unknown) => {
             const workoutData = workout as Record<string, unknown>;
+            const workoutDay = (workoutData.day as number) || 1;
+            
+            // Calculate fallback workout date based on week start and day number
+            const weekStartDate = new Date((weekData.startDate as string) || fallbackStartDate.toISOString().split('T')[0]);
+            const workoutDate = new Date(weekStartDate);
+            workoutDate.setDate(weekStartDate.getDate() + (workoutDay - 1));
+            
             return {
-              day: (workoutData.day as number) || 1,
-              date: (workoutData.date as string) || (weekData.startDate as string),
+              day: workoutDay,
+              date: (workoutData.date as string) || workoutDate.toISOString().split('T')[0],
               type: this.validateWorkoutType(workoutData.type),
               name: (workoutData.name as string) || 'Workout',
               description: (workoutData.description as string) || '',

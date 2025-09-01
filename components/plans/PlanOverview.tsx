@@ -58,8 +58,13 @@ export default function PlanOverview({ plan, className = '', onWeekSelect }: Pla
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {formatRaceDistance(plan.raceDistance)} Training Plan
+              {plan.customName ? `${plan.customName} Training Plan` : `${formatRaceDistance(plan.raceDistance)} Training Plan`}
             </h2>
+            {plan.customName && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {formatRaceDistance(plan.raceDistance)}
+              </p>
+            )}
             <div className="space-y-1">
               {plan.targetTime && (
                 <p className="text-gray-600 dark:text-gray-300">

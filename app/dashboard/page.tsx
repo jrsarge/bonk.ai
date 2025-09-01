@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [storedPlans, setStoredPlans] = useState<StoredPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'plans' | 'current' | 'analysis'>('current');
+  const [editingPlan, setEditingPlan] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   // Load plans from localStorage on component mount
   useEffect(() => {
@@ -67,6 +69,36 @@ export default function Dashboard() {
       case 'marathon': return 'Marathon';
       default: return distance.toUpperCase();
     }
+  };
+
+  const handleStartRename = (planId: string, currentName?: string) => {
+    setEditingPlan(planId);
+    setEditingName(currentName || '');
+  };
+
+  const handleSaveRename = (planId: string) => {
+    if (editingName.trim()) {
+      planStorage.renamePlan(planId, editingName.trim());
+      // Refresh plans to show the updated name
+      const plans = planStorage.getAllPlans();
+      setStoredPlans(plans);
+      
+      // Update selected plan if it's the one being renamed
+      if (selectedPlan && selectedPlan.id === planId) {
+        setSelectedPlan({ ...selectedPlan, customName: editingName.trim() });
+      }
+    }
+    setEditingPlan(null);
+    setEditingName('');
+  };
+
+  const handleCancelRename = () => {
+    setEditingPlan(null);
+    setEditingName('');
+  };
+
+  const getPlanDisplayName = (plan: TrainingPlan): string => {
+    return plan.customName || formatRaceDistance(plan.raceDistance);
   };
 
   return (
@@ -157,7 +189,7 @@ export default function Dashboard() {
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Your {formatRaceDistance(selectedPlan.raceDistance)} Training Plan
+                    {getPlanDisplayName(selectedPlan)} Training Plan
                   </h2>
                   <p className="text-gray-600 dark:text-gray-300">
                     Generated {new Date(selectedPlan.generatedAt).toLocaleDateString()}
@@ -193,31 +225,70 @@ export default function Dashboard() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {storedPlans.map((storedPlan) => {
                     const { plan } = storedPlan;
-                    const stats = planStorage.getPlanStats(plan.id);
                     
                     return (
-                      <div key={plan.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                      <div key={plan.id} className="group bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                         <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                              {formatRaceDistance(plan.raceDistance)}
-                            </h3>
+                          <div className="flex-1">
+                            {editingPlan === plan.id ? (
+                              <div className="flex items-center space-x-2 mb-2">
+                                <input
+                                  type="text"
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handleSaveRename(plan.id);
+                                    } else if (e.key === 'Escape') {
+                                      handleCancelRename();
+                                    }
+                                  }}
+                                  className="text-lg font-semibold bg-transparent border-b-2 border-blue-500 focus:outline-none text-gray-900 dark:text-white"
+                                  placeholder="Enter plan name"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => handleSaveRename(plan.id)}
+                                  className="text-green-600 hover:text-green-700 p-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={handleCancelRename}
+                                  className="text-red-600 hover:text-red-700 p-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2 mb-1">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {getPlanDisplayName(plan)}
+                                </h3>
+                                <button
+                                  onClick={() => handleStartRename(plan.id, plan.customName)}
+                                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                            {!plan.customName && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                                {formatRaceDistance(plan.raceDistance)}
+                              </p>
+                            )}
                             {plan.targetTime && (
                               <p className="text-sm text-gray-600 dark:text-gray-300">
                                 Target: {plan.targetTime}
                               </p>
                             )}
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {stats.completionPercentage}% complete
-                            </div>
-                            <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full" 
-                                style={{ width: `${stats.completionPercentage}%` }}
-                              ></div>
-                            </div>
                           </div>
                         </div>
                         
