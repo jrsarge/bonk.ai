@@ -1,5 +1,6 @@
 import { TrainingPlan } from '@/types';
 import { useState } from 'react';
+import WeeklyMileageChart from './WeeklyMileageChart';
 
 interface PlanOverviewProps {
   plan: TrainingPlan;
@@ -110,37 +111,9 @@ export default function PlanOverview({ plan, className = '', onWeekSelect }: Pla
 
       {viewMode === 'overview' ? (
         <>
-          {/* Weekly Overview Grid */}
+          {/* Weekly Mileage Chart */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Weekly Breakdown
-            </h3>
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-              {plan.weeks.map((week) => (
-                <div
-                  key={week.weekNumber}
-                  onClick={() => onWeekSelect?.(week.weekNumber)}
-                  className={`bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center transition-colors ${
-                    onWeekSelect ? 'hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer hover:shadow-md' : ''
-                  }`}
-                >
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Week {week.weekNumber}
-                  </div>
-                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-1">
-                    {week.totalDistance.toFixed(0)}
-                  </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300">
-                    miles
-                  </div>
-                  {week.theme && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                      {week.theme}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <WeeklyMileageChart weeks={plan.weeks} />
           </div>
 
           {/* Plan Summary and Pace Recommendations */}
