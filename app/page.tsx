@@ -5,6 +5,16 @@ import Image from 'next/image';
 import { StravaConnectButton } from '@/components/auth';
 import { useApp } from '@/lib/auth/context';
 
+const smoothScrollTo = (elementId: string) => {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+};
+
 export default function Home() {
   const { isStravaConnected } = useApp();
   return (
@@ -79,8 +89,8 @@ export default function Home() {
               ) : (
                 <StravaConnectButton className="group bg-primary hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-200 shadow-2xl hover:shadow-blue-500/25 hover:scale-105" />
               )}
-              <Link
-                href="#features"
+              <button
+                onClick={() => smoothScrollTo('features')}
                 className="group border-2 border-white/80 hover:border-white text-white hover:bg-white hover:text-gray-900 px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-200 backdrop-blur-sm hover:scale-105"
               >
                 <span className="flex items-center">
@@ -89,7 +99,7 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                 </span>
-              </Link>
+              </button>
             </div>
             
             {/* Trust indicators */}
