@@ -67,6 +67,10 @@ export default function Dashboard() {
       case '10k': return '10K';  
       case 'half': return 'Half Marathon';
       case 'marathon': return 'Marathon';
+      case '50k': return '50K Ultramarathon';
+      case '50mile': return '50 Mile Ultramarathon';
+      case '100k': return '100K Ultramarathon';
+      case '100mile': return '100 Mile Ultramarathon';
       default: return distance.toUpperCase();
     }
   };
@@ -282,7 +286,7 @@ export default function Dashboard() {
                     const { plan } = storedPlan;
                     
                     return (
-                      <div key={plan.id} className="group bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                      <div key={plan.id} className="group bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col h-full">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1">
                             {editingPlan === plan.id ? (
@@ -347,7 +351,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm mb-4 flex-grow">
                           <div>
                             <span className="text-gray-500 dark:text-gray-400">Weeks:</span>
                             <div className="font-medium text-gray-900 dark:text-white">
@@ -366,7 +370,7 @@ export default function Dashboard() {
                           Created: {new Date(storedPlan.createdAt).toLocaleDateString()}
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 mt-auto">
                           <button
                             onClick={() => handlePlanSelect(plan.id)}
                             className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors"

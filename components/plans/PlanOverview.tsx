@@ -14,6 +14,10 @@ const formatRaceDistance = (distance: string): string => {
     case '10k': return '10K';
     case 'half': return 'Half Marathon';
     case 'marathon': return 'Marathon';
+    case '50k': return '50K Ultramarathon';
+    case '50mile': return '50 Mile Ultramarathon';
+    case '100k': return '100K Ultramarathon';
+    case '100mile': return '100 Mile Ultramarathon';
     default: return distance.toUpperCase();
   }
 };

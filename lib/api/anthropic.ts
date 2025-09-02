@@ -78,7 +78,7 @@ export class AnthropicClient {
     
     try {
       const response = await this.client.messages.create({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-3-7-sonnet-latest',
         max_tokens: 16000,
         temperature: 0.3,
         messages: [
@@ -170,6 +170,10 @@ ${planningNotes}
    - 10K: Speed + aerobic balance, threshold work  
    - Half Marathon: Tempo emphasis, progressive long runs
    - Marathon: Aerobic base, long runs up to 20+ miles
+   - 50K Ultramarathon: Aerobic base priority, back-to-back long runs, walking breaks strategy, nutrition practice
+   - 50 Mile Ultramarathon: Extended aerobic base, consecutive long runs, power hiking, aid station strategy  
+   - 100K Ultramarathon: Ultra-endurance focus, back-to-back long runs up to 6+ hours, night running practice
+   - 100 Mile Ultramarathon: Maximum aerobic capacity, consecutive long runs, race simulation runs up to 8+ hours
 8. Realistic pace recommendations based on current fitness
 9. Include rest days and cross-training options
 10. Injury prevention focus - don't increase mileage too aggressively

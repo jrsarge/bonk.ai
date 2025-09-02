@@ -132,6 +132,10 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
             <option value="10k">10K</option>
             <option value="half">Half Marathon</option>
             <option value="marathon">Marathon</option>
+            <option value="50k">50K Ultramarathon</option>
+            <option value="50mile">50 Mile Ultramarathon</option>
+            <option value="100k">100K Ultramarathon</option>
+            <option value="100mile">100 Mile Ultramarathon</option>
           </select>
         </div>
 

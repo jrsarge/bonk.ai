@@ -21,7 +21,7 @@ export interface TrainingAnalysis {
   recommendedRaceDistance: '5k' | '10k' | 'half' | 'marathon';
 }
 
-export type RaceDistance = '5k' | '10k' | 'half' | 'marathon';
+export type RaceDistance = '5k' | '10k' | 'half' | 'marathon' | '50k' | '50mile' | '100k' | '100mile';
 
 export interface TrainingPlan {
   id: string;

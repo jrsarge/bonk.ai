@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       datePreferences,
       preferences
     } = body as {
-      raceDistance: '5k' | '10k' | 'half' | 'marathon';
+      raceDistance: '5k' | '10k' | 'half' | 'marathon' | '50k' | '50mile' | '100k' | '100mile';
       targetTime?: string;
       stravaActivities?: StravaActivity[];
       trainingDays?: number;
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validDistances = ['5k', '10k', 'half', 'marathon'];
+    const validDistances = ['5k', '10k', 'half', 'marathon', '50k', '50mile', '100k', '100mile'];
     if (!validDistances.includes(raceDistance)) {
       return NextResponse.json(
         { error: 'Invalid race distance' },
