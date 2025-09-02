@@ -127,8 +127,6 @@ export default function WeekView({
           >
             <WorkoutCard
               workout={workout}
-              planId={plan.id}
-              weekNumber={weekNumber}
               className={`h-full ${onDaySelect ? 'hover:shadow-lg' : ''}`}
             />
           </div>

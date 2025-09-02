@@ -160,7 +160,6 @@ export default function PlanDisplayLayout({ plan, className = '' }: PlanDisplayL
         {viewState.mode === 'overview' && (
           <PlanOverview
             plan={plan}
-            onWeekSelect={navigateToWeek}
             className="animate-fadeIn"
           />
         )}

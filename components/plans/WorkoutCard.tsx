@@ -2,8 +2,6 @@ import { TrainingWorkout } from '@/types';
 
 interface WorkoutCardProps {
   workout: TrainingWorkout;
-  planId: string;
-  weekNumber: number;
   className?: string;
 }
 
@@ -36,7 +34,7 @@ const getDayName = (dayNumber: number): string => {
   return days[dayNumber - 1] || `Day ${dayNumber}`;
 };
 
-export default function WorkoutCard({ workout, planId, weekNumber, className = '' }: WorkoutCardProps) {
+export default function WorkoutCard({ workout, className = '' }: WorkoutCardProps) {
   const isRestDay = workout.type === 'rest';
 
   return (
