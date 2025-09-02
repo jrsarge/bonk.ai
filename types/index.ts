@@ -85,6 +85,7 @@ export interface PlanGenerationResponse {
   success: boolean;
   plan?: TrainingPlan;
   error?: string;
+  resetIn?: string;
 }
 
 export interface StoredPlan {
