@@ -240,47 +240,6 @@ export class PlanStorage {
     }
   }
 
-  /**
-   * Mark a workout as completed
-   */
-  markWorkoutCompleted(planId: string, weekNumber: number, dayNumber: number): void {
-    const storage = this.getStorage();
-    if (!storage) return;
-
-    try {
-      const plans = this.getAllPlans();
-      const updatedPlans = plans.map(storedPlan => {
-        if (storedPlan.plan.id === planId) {
-          const updatedPlan = { ...storedPlan.plan };
-          updatedPlan.weeks = updatedPlan.weeks.map(week => {
-            if (week.weekNumber === weekNumber) {
-              return {
-                ...week,
-                workouts: week.workouts.map(workout => {
-                  if (workout.day === dayNumber) {
-                    return { ...workout, completed: !workout.completed };
-                  }
-                  return workout;
-                })
-              };
-            }
-            return week;
-          });
-
-          return {
-            ...storedPlan,
-            plan: updatedPlan,
-            lastViewed: new Date().toISOString()
-          };
-        }
-        return storedPlan;
-      });
-
-      storage.setItem(STORAGE_KEYS.PLANS, JSON.stringify(updatedPlans));
-    } catch (error) {
-      console.error('Failed to mark workout as completed:', error);
-    }
-  }
 
   /**
    * Clear all stored plans (for testing or reset)
