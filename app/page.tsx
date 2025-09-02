@@ -16,7 +16,7 @@ const smoothScrollTo = (elementId: string) => {
 };
 
 export default function Home() {
-  const { isStravaConnected } = useApp();
+  const { isStravaConnected, isGuestMode, enableGuestMode } = useApp();
   return (
     <div className="relative">
       {/* Background Image - Full height with proper cropping */}
@@ -74,7 +74,7 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              {isStravaConnected ? (
+              {isStravaConnected || isGuestMode ? (
                 <Link
                   href="/dashboard"
                   className="group bg-primary hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-200 shadow-2xl hover:shadow-blue-500/25 hover:scale-105"
@@ -87,7 +87,25 @@ export default function Home() {
                   </span>
                 </Link>
               ) : (
-                <StravaConnectButton className="group bg-primary hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-200 shadow-2xl hover:shadow-blue-500/25 hover:scale-105" />
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <StravaConnectButton className="group bg-primary hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 shadow-2xl hover:shadow-blue-500/25 hover:scale-105" />
+                  <button
+                    onClick={async () => {
+                      enableGuestMode();
+                      // Small delay to ensure localStorage is set
+                      await new Promise(resolve => setTimeout(resolve, 100));
+                      window.location.href = '/dashboard';
+                    }}
+                    className="group bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/40 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 hover:scale-105"
+                  >
+                    <span className="flex items-center">
+                      Continue as Guest
+                      <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </span>
+                  </button>
+                </div>
               )}
               <button
                 onClick={() => smoothScrollTo('features')}
@@ -101,6 +119,13 @@ export default function Home() {
                 </span>
               </button>
             </div>
+            
+            {!(isStravaConnected || isGuestMode) && (
+              <div className="text-center text-white/80 text-sm mb-6">
+                <p className="mb-2">Connect Strava for personalized plans based on your data</p>
+                <p>or continue as guest for basic plan generation</p>
+              </div>
+            )}
             
             {/* Trust indicators */}
             <div className="flex flex-wrap justify-center items-center gap-6 text-white/70 text-sm">

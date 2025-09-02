@@ -10,7 +10,7 @@ import { TrainingPlan, StoredPlan } from '@/types';
 import { planStorage } from '@/lib/storage/plans';
 
 export default function Dashboard() {
-  const { stravaAthlete } = useApp();
+  const { stravaAthlete, isStravaConnected, isGuestMode } = useApp();
   const [storedPlans, setStoredPlans] = useState<StoredPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
   const [activeTab, setActiveTab] = useState<'generate' | 'plans' | 'current' | 'analysis'>('current');
@@ -110,7 +110,7 @@ export default function Dashboard() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard allowGuest={true}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm">
@@ -134,11 +134,21 @@ export default function Dashboard() {
         <main className="container mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome back{stravaAthlete?.firstname ? `, ${stravaAthlete.firstname}` : ''}!
+              Welcome{stravaAthlete?.firstname ? `, ${stravaAthlete.firstname}` : isGuestMode ? ' Guest' : ' back'}!
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Your AI-powered training analysis and plan generation hub.
+              {isGuestMode 
+                ? 'Generate AI-powered training plans. Connect Strava for personalized analysis.'
+                : 'Your AI-powered training analysis and plan generation hub.'
+              }
             </p>
+            {isGuestMode && !isStravaConnected && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-blue-800 dark:text-blue-200 text-sm">
+                  🏃‍♂️ <strong>Guest Mode:</strong> You can generate training plans, but connecting Strava unlocks personalized analysis based on your running data.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Tab Navigation */}
@@ -177,16 +187,18 @@ export default function Dashboard() {
                 >
                   All Plans ({storedPlans.length})
                 </button>
-                <button
-                  onClick={() => setActiveTab('analysis')}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'analysis'
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  Training Analysis
-                </button>
+                {isStravaConnected && (
+                  <button
+                    onClick={() => setActiveTab('analysis')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'analysis'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Training Analysis
+                  </button>
+                )}
               </nav>
             </div>
           </div>

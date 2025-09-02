@@ -1,33 +1,47 @@
 'use client';
 
 import { useApp } from '@/lib/auth/context';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { LoadingSpinner } from '@/components/ui';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   redirectTo?: string;
+  allowGuest?: boolean;
 }
 
 export default function AuthGuard({ 
   children, 
   fallback,
-  redirectTo = '/' 
+  redirectTo = '/',
+  allowGuest = false
 }: AuthGuardProps) {
-  const { isStravaConnected } = useApp();
+  const { isStravaConnected, isGuestMode } = useApp();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!isStravaConnected) {
+    // Give a moment for context to initialize from localStorage
+    const timer = setTimeout(() => {
+      setIsChecking(false);
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  const isAuthorized = isStravaConnected || (allowGuest && isGuestMode);
+
+  useEffect(() => {
+    if (!isChecking && !isAuthorized) {
       window.location.href = redirectTo;
     }
-  }, [isStravaConnected, redirectTo]);
+  }, [isAuthorized, redirectTo, isChecking]);
 
-  if (!isStravaConnected) {
+  if (isChecking || !isAuthorized) {
     return fallback || (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
-        <p className="ml-4">Redirecting to connect Strava...</p>
+        <p className="ml-4">{isChecking ? 'Loading...' : 'Redirecting...'}</p>
       </div>
     );
   }

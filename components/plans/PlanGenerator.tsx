@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useApp } from '@/lib/auth/context';
 import { RaceDistance, TrainingPlan, PlanGenerationResponse } from '@/types';
 import { planStorage } from '@/lib/storage/plans';
+import { TimePicker } from '@/components/ui';
 
 interface PlanGeneratorProps {
   onGenerate?: (plan: TrainingPlan) => void;
@@ -143,14 +144,15 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
           <label htmlFor="targetTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Target Time (optional)
           </label>
-          <input 
-            type="text"
-            id="targetTime"
+          <TimePicker
             value={targetTime}
-            onChange={(e) => setTargetTime(e.target.value)}
-            placeholder="e.g., 1:30:00 for half marathon"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            onChange={setTargetTime}
+            placeholder="Select your target time"
+            className="w-full"
           />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Choose your goal time for the race distance
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

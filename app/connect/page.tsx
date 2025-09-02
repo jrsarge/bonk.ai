@@ -26,8 +26,23 @@ function ConnectPageContent() {
         
         localStorage.setItem('strava_access_token', accessToken);
         localStorage.setItem('strava_athlete', JSON.stringify(athlete));
+        // Clear guest mode since we're now connected to Strava
+        localStorage.removeItem('guest_mode');
         
-        router.push('/dashboard');
+        // Dispatch custom event to notify context of auth state change
+        window.dispatchEvent(new CustomEvent('authStateChanged', {
+          detail: { type: 'strava_connected', athlete, accessToken }
+        }));
+        
+        // Check redirect preference and clean it up
+        const redirectPreference = localStorage.getItem('oauth_redirect');
+        localStorage.removeItem('oauth_redirect');
+        
+        // Small delay to ensure localStorage is set before redirect
+        setTimeout(() => {
+          // Always go to dashboard after OAuth completion
+          router.push('/dashboard');
+        }, 100);
       } catch (error) {
         console.error('Failed to parse athlete data:', error);
       }

@@ -9,8 +9,10 @@ interface AppContextType {
   stravaAccessToken: string | null;
   trainingPlans: TrainingPlan[];
   isStravaConnected: boolean;
+  isGuestMode: boolean;
   connectStrava: () => void;
   disconnectStrava: () => void;
+  enableGuestMode: () => void;
   saveTrainingPlan: (plan: TrainingPlan) => void;
   deleteTrainingPlan: (planId: string) => void;
   exportTrainingPlans: () => void;
@@ -22,11 +24,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [stravaAthlete, setStravaAthlete] = useState<StravaAthlete | null>(null);
   const [stravaAccessToken, setStravaAccessToken] = useState<string | null>(null);
   const [trainingPlans, setTrainingPlans] = useState<TrainingPlan[]>([]);
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(false);
 
   useEffect(() => {
     const savedAthlete = localStorage.getItem('strava_athlete');
     const savedToken = localStorage.getItem('strava_access_token');
     const savedPlans = localStorage.getItem('training_plans');
+    const savedGuestMode = localStorage.getItem('guest_mode') === 'true';
 
     if (savedAthlete) {
       setStravaAthlete(JSON.parse(savedAthlete));
@@ -37,17 +41,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (savedPlans) {
       setTrainingPlans(JSON.parse(savedPlans));
     }
+    if (savedGuestMode) {
+      setIsGuestMode(true);
+    }
+  }, []);
+
+  // Listen for auth state changes to update context when OAuth completes
+  useEffect(() => {
+    const handleAuthStateChange = (e: CustomEvent) => {
+      if (e.detail.type === 'strava_connected') {
+        setStravaAthlete(e.detail.athlete);
+        setStravaAccessToken(e.detail.accessToken);
+        setIsGuestMode(false);
+      }
+    };
+
+    window.addEventListener('authStateChanged', handleAuthStateChange as EventListener);
+    return () => window.removeEventListener('authStateChanged', handleAuthStateChange as EventListener);
   }, []);
 
   const connectStrava = () => {
+    // Set redirect preference to dashboard after OAuth
+    localStorage.setItem('oauth_redirect', 'dashboard');
+    // Don't clear guest mode here - let the connect page handle it after successful OAuth
     window.location.href = '/api/auth/strava';
   };
 
   const disconnectStrava = () => {
     localStorage.removeItem('strava_athlete');
     localStorage.removeItem('strava_access_token');
+    localStorage.removeItem('guest_mode');
     setStravaAthlete(null);
     setStravaAccessToken(null);
+    setIsGuestMode(false);
+  };
+
+  const enableGuestMode = () => {
+    localStorage.setItem('guest_mode', 'true');
+    setIsGuestMode(true);
   };
 
   const saveTrainingPlan = (plan: TrainingPlan) => {
@@ -80,8 +111,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     stravaAccessToken,
     trainingPlans,
     isStravaConnected,
+    isGuestMode,
     connectStrava,
     disconnectStrava,
+    enableGuestMode,
     saveTrainingPlan,
     deleteTrainingPlan,
     exportTrainingPlans,
