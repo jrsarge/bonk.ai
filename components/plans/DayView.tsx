@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { TrainingPlan } from '@/types';
-import { planStorage } from '@/lib/storage/plans';
 
 interface DayViewProps {
   plan: TrainingPlan;

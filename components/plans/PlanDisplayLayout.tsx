@@ -122,15 +122,15 @@ export default function PlanDisplayLayout({ plan, className = '' }: PlanDisplayL
 
           {/* Action buttons */}
           <div className="flex items-center space-x-3">
-            {/* Progress indicator */}
+            {/* Plan stats */}
             <div className="hidden md:flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-300">
               <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>{planStats.completedWorkouts} completed</span>
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>{planStats.totalWorkouts} workouts</span>
               </div>
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                <span>{planStats.totalWorkouts - planStats.completedWorkouts} remaining</span>
+                <span>Week {planStats.currentWeek}</span>
               </div>
             </div>
 
