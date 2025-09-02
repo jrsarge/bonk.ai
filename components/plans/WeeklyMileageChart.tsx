@@ -145,12 +145,12 @@ export default function WeeklyMileageChart({ weeks, className = '' }: WeeklyMile
           
           {/* Axis labels */}
           <text
-            x={padding / 2}
+            x={20}
             y={padding + plotHeight / 2}
             textAnchor="middle"
             className="text-sm fill-gray-700 dark:fill-gray-300"
             style={{ fontSize: '14px' }}
-            transform={`rotate(-90, ${padding / 2}, ${padding + plotHeight / 2})`}
+            transform={`rotate(-90, 20, ${padding + plotHeight / 2})`}
           >
             Miles
           </text>
