@@ -139,32 +139,20 @@ export default function PlanDisplayLayout({ plan, className = '' }: PlanDisplayL
           </div>
         </div>
 
-        {/* Mobile progress indicator */}
+        {/* Mobile plan stats */}
         <div className="md:hidden mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>{planStats.completedWorkouts} done</span>
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>{planStats.totalWorkouts} workouts</span>
             </div>
             <div className="flex items-center space-x-1">
               <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-              <span>{planStats.totalWorkouts - planStats.completedWorkouts} left</span>
+              <span>Week {planStats.currentWeek}</span>
             </div>
-          </div>
-          <div className="text-blue-600 dark:text-blue-400 font-medium">
-            {planStats.completionPercentage}% complete
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${planStats.completionPercentage}%` }}
-            />
-          </div>
-        </div>
       </div>
 
       {/* Main content area */}

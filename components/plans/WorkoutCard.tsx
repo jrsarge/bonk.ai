@@ -1,5 +1,4 @@
 import { TrainingWorkout } from '@/types';
-import { planStorage } from '@/lib/storage/plans';
 
 interface WorkoutCardProps {
   workout: TrainingWorkout;
@@ -38,25 +37,10 @@ const getDayName = (dayNumber: number): string => {
 };
 
 export default function WorkoutCard({ workout, planId, weekNumber, className = '' }: WorkoutCardProps) {
-  const handleToggleComplete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering parent click handlers
-    planStorage.markWorkoutCompleted(planId, weekNumber, workout.day);
-    // Force a re-render by triggering a small delay
-    setTimeout(() => window.dispatchEvent(new Event('storage')), 100);
-  };
-
   const isRestDay = workout.type === 'rest';
 
   return (
-    <div className={`group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-all duration-200 ${workout.completed ? 'ring-2 ring-green-200 dark:ring-green-800' : 'hover:border-blue-300 dark:hover:border-blue-600'} ${className}`}>
-      {/* Completion overlay */}
-      {workout.completed && !isRestDay && (
-        <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        </div>
-      )}
+    <div className={`group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-600 ${className}`}>
       
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
@@ -73,14 +57,6 @@ export default function WorkoutCard({ workout, planId, weekNumber, className = '
             {workout.name}
           </p>
         </div>
-        
-        {!isRestDay && !workout.completed && (
-          <button
-            onClick={handleToggleComplete}
-            className="ml-2 w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-500 hover:border-green-400 dark:hover:border-green-500 flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
-          >
-          </button>
-        )}
       </div>
       
       {/* Description */}
@@ -179,11 +155,6 @@ export default function WorkoutCard({ workout, planId, weekNumber, className = '
         <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
             <span>{new Date(workout.date).toLocaleDateString()}</span>
-            {!isRestDay && !workout.completed && (
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-                Click to mark complete
-              </span>
-            )}
           </div>
         </div>
       )}

@@ -11,13 +11,11 @@ interface WeekViewProps {
   className?: string;
 }
 
-const getWeekProgress = (week: TrainingWeek): { completed: number; total: number; percentage: number } => {
+const getWeekStats = (week: TrainingWeek): { total: number } => {
   const workouts = week.workouts.filter(w => w.type !== 'rest');
-  const completed = workouts.filter(w => w.completed).length;
   const total = workouts.length;
-  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
   
-  return { completed, total, percentage };
+  return { total };
 };
 
 export default function WeekView({ 
@@ -51,7 +49,7 @@ export default function WeekView({
     );
   }
 
-  const progress = getWeekProgress(week);
+  const stats = getWeekStats(week);
   const startDate = new Date(week.startDate);
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + 6);
@@ -94,30 +92,23 @@ export default function WeekView({
             )}
           </div>
 
-          {/* Week progress */}
+          {/* Week stats */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-w-[200px]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Week Progress
+                Week Overview
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {progress.completed}/{progress.total} workouts
+                {stats.total} workouts
               </span>
-            </div>
-            
-            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 mb-2">
-              <div
-                className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-300"
-                style={{ width: `${progress.percentage}%` }}
-              />
             </div>
             
             <div className="text-center">
               <span className="text-lg font-bold text-gray-900 dark:text-white">
-                {progress.percentage}%
+                {week.totalDistance.toFixed(1)} mi
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
-                complete
+                total distance
               </span>
             </div>
           </div>
