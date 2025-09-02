@@ -85,6 +85,12 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
       
       const data = await planResponse.json() as PlanGenerationResponse;
       
+      // Handle rate limiting
+      if (planResponse.status === 429) {
+        const resetInfo = data.resetIn ? ` Please try again in ${data.resetIn}.` : ' Please try again later.';
+        throw new Error(data.error + resetInfo);
+      }
+      
       if (data.success && data.plan) {
         setGenerationStep('Finalizing your plan...');
         
@@ -293,20 +299,38 @@ export default function PlanGenerator({ onGenerate }: PlanGeneratorProps) {
           </div>
         </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={!raceDistance || isGenerating}
-          className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-        >
-          {isGenerating ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>{generationStep || 'Generating Plan...'}</span>
-            </>
-          ) : (
-            <span>Generate AI Training Plan</span>
-          )}
-        </button>
+        <div className="space-y-3">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+            <div className="flex items-start space-x-2">
+              <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Rate Limit: 1 Plan Per Day
+                </p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                  To prevent abuse, each IP address can generate only 1 training plan per 24-hour period.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGenerate}
+            disabled={!raceDistance || isGenerating}
+            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          >
+            {isGenerating ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>{generationStep || 'Generating Plan...'}</span>
+              </>
+            ) : (
+              <span>Generate AI Training Plan</span>
+            )}
+          </button>
+        </div>
         
         {stravaAccessToken && (
           <p className="text-xs text-center text-gray-500 dark:text-gray-400">

@@ -3,9 +3,35 @@ import { TrainingPlan, PlanGenerationRequest, PlanGenerationResponse } from '@/t
 import { anthropicClient } from '@/lib/api/anthropic';
 import { TrainingAnalyzer } from '@/lib/training/analysis';
 import { StravaActivity } from '@/types/strava';
+import { planGenerationLimiter, getClientIP } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check rate limit first
+    const clientIP = getClientIP(request);
+    const rateLimitResult = planGenerationLimiter.check(clientIP);
+    
+    if (!rateLimitResult.allowed) {
+      const resetTime = rateLimitResult.resetTime || Date.now() + 24 * 60 * 60 * 1000;
+      const hoursUntilReset = Math.ceil((resetTime - Date.now()) / (1000 * 60 * 60));
+      
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded. You can only generate 1 training plan per day.',
+          resetIn: `${hoursUntilReset} hours`
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((resetTime - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': '1',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': Math.ceil(resetTime / 1000).toString()
+          }
+        }
+      );
+    }
+    
     const body = await request.json();
     const { 
       raceDistance, 

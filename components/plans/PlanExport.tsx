@@ -109,13 +109,11 @@ export default function PlanExport({ plan, className = '' }: PlanExportProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Export Format
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {[
               { value: 'text', label: 'Text (.txt)', description: 'Readable text format' },
               { value: 'csv', label: 'Spreadsheet (.csv)', description: 'Import into Excel/Sheets' },
-              { value: 'pdf', label: 'PDF (.pdf)', description: 'Print-ready document' },
-              { value: 'ical', label: 'Calendar (.ics)', description: 'Import into calendar apps' },
-              { value: 'json', label: 'JSON (.json)', description: 'Full data export' }
+              { value: 'ical', label: 'Calendar (.ics)', description: 'Import into calendar apps' }
             ].map((format) => (
               <label key={format.value} className="relative">
                 <input
@@ -144,7 +142,7 @@ export default function PlanExport({ plan, className = '' }: PlanExportProps) {
         </div>
 
         {/* Options */}
-        {(exportOptions.format === 'text' || exportOptions.format === 'csv' || exportOptions.format === 'pdf') && (
+        {(exportOptions.format === 'text' || exportOptions.format === 'csv') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Include Options
@@ -211,10 +209,8 @@ export default function PlanExport({ plan, className = '' }: PlanExportProps) {
 
         <div className="text-xs text-gray-500 dark:text-gray-400">
           <p>• Text format provides a readable summary of your plan</p>
-          <p>• CSV format can be imported into spreadsheet applications</p>
-          <p>• PDF format creates a print-ready document (uses browser print)</p>
-          <p>• Calendar format can be imported into most calendar apps</p>
-          <p>• JSON format contains all plan data for backup purposes</p>
+          <p>• Spreadsheet format can be imported into Excel, Google Sheets, or other spreadsheet applications</p>
+          <p>• Calendar format can be imported into most calendar apps like Google Calendar, Outlook, or Apple Calendar</p>
         </div>
       </div>
     </div>

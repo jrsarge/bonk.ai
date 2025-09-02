@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { StravaConnectButton } from '@/components/auth';
 import { useApp } from '@/lib/auth/context';
+import { Footer } from '@/components/ui';
 
 const smoothScrollTo = (elementId: string) => {
   const element = document.getElementById(elementId);
@@ -208,6 +209,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
