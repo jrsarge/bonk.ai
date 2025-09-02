@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { stravaClient } from '@/lib/api/strava';
 import { cookies } from 'next/headers';
 
