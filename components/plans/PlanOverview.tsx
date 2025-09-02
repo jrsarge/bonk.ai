@@ -5,7 +5,6 @@ import WeeklyMileageChart from './WeeklyMileageChart';
 interface PlanOverviewProps {
   plan: TrainingPlan;
   className?: string;
-  onWeekSelect?: (weekNumber: number) => void;
 }
 
 const formatRaceDistance = (distance: string): string => {
@@ -55,7 +54,7 @@ const getEffortLevelText = (level: number) => {
   }
 };
 
-export default function PlanOverview({ plan, className = '', onWeekSelect }: PlanOverviewProps) {
+export default function PlanOverview({ plan, className = '' }: PlanOverviewProps) {
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 ${className}`}>

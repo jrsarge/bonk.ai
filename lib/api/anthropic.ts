@@ -5,7 +5,7 @@ const anthropic = new Anthropic({
 });
 
 export interface PlanGenerationPromptData {
-  raceDistance: '5k' | '10k' | 'half' | 'marathon';
+  raceDistance: '5k' | '10k' | 'half' | 'marathon' | '50k' | '50mile' | '100k' | '100mile';
   targetTime?: string;
   stravaAnalysis?: {
     weeklyMileage: number;

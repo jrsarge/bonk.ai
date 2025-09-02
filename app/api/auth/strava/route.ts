@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stravaClient } from '@/lib/api/strava';
 import { cookies } from 'next/headers';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Generate secure state parameter for CSRF protection
     const state = crypto.randomUUID();

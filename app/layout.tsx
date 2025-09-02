@@ -12,6 +12,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "bonk.ai - AI-Powered Running Training Plans",
   description: "Get personalized 12-week running training plans powered by AI and your Strava data. Never hit the wall again.",
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

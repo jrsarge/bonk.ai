@@ -1,6 +1,7 @@
 'use client';
 
 import { useApp } from '@/lib/auth/context';
+import Image from 'next/image';
 
 interface UserProfileProps {
   className?: string;
@@ -36,9 +37,11 @@ export default function UserProfile({ className = '' }: UserProfileProps) {
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
       {stravaAthlete?.profile_medium ? (
-        <img 
+        <Image 
           src={stravaAthlete.profile_medium} 
           alt={`${stravaAthlete.firstname} ${stravaAthlete.lastname}`}
+          width={32}
+          height={32}
           className="w-8 h-8 rounded-full"
         />
       ) : (

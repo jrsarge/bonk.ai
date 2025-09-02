@@ -35,7 +35,6 @@ function ConnectPageContent() {
         }));
         
         // Check redirect preference and clean it up
-        const redirectPreference = localStorage.getItem('oauth_redirect');
         localStorage.removeItem('oauth_redirect');
         
         // Small delay to ensure localStorage is set before redirect
