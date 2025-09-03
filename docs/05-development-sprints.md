@@ -7,7 +7,7 @@ Set up development tooling and code quality standards
 Create basic project structure and routing
 Establish design system foundation
 
-User Stories
+User Stories to help build
 
 SETUP-001: As a developer, I need a properly configured Next.js project so I can begin development efficiently
 SETUP-002: As a developer, I need a consistent code style and linting setup so the codebase remains maintainable
