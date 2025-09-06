@@ -6,6 +6,7 @@ import { AuthGuard, UserProfile } from '@/components/auth';
 import { useApp } from '@/lib/auth/context';
 import { PlanGenerator, PlanOverview, PlanExport } from '@/components/plans';
 import { TrainingDashboard } from '@/components/training';
+import { CyclingDashboard } from '@/components/cycling';
 import { TrainingPlan, StoredPlan } from '@/types';
 import { planStorage } from '@/lib/storage/plans';
 
@@ -13,7 +14,7 @@ export default function Dashboard() {
   const { stravaAthlete, isStravaConnected, isGuestMode } = useApp();
   const [storedPlans, setStoredPlans] = useState<StoredPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
-  const [activeTab, setActiveTab] = useState<'generate' | 'plans' | 'current' | 'analysis'>('current');
+  const [activeTab, setActiveTab] = useState<'generate' | 'plans' | 'current' | 'analysis' | 'cycling'>('current');
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
@@ -197,6 +198,18 @@ export default function Dashboard() {
                     }`}
                   >
                     Training Analysis
+                  </button>
+                )}
+                {isStravaConnected && (
+                  <button
+                    onClick={() => setActiveTab('cycling')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'cycling'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Cycling
                   </button>
                 )}
               </nav>
@@ -426,6 +439,10 @@ export default function Dashboard() {
 
           {activeTab === 'analysis' && (
             <TrainingDashboard />
+          )}
+
+          {activeTab === 'cycling' && (
+            <CyclingDashboard />
           )}
         </main>
       </div>

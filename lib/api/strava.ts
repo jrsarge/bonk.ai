@@ -154,6 +154,66 @@ class StravaClient {
       throw error;
     }
   }
+
+  async getRecentCyclingActivities(
+    accessToken: string,
+    weeks = 12
+  ): Promise<StravaActivity[]> {
+    const after = Math.floor(Date.now() / 1000) - (weeks * 7 * 24 * 60 * 60);
+    const allActivities: StravaActivity[] = [];
+    let page = 1;
+    const perPage = 200;
+
+    try {
+      while (true) {
+        const activities = await this.getCyclingActivities(accessToken, undefined, after, page, perPage);
+        
+        if (activities.length === 0) break;
+        
+        allActivities.push(...activities);
+        
+        if (activities.length < perPage) break;
+        
+        page++;
+        
+        if (page > 10) break;
+      }
+
+      return allActivities.sort((a, b) => 
+        new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+      );
+    } catch (error) {
+      if (error instanceof StravaAPIError && error.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      throw error;
+    }
+  }
+
+  async getCyclingActivities(
+    accessToken: string,
+    before?: number,
+    after?: number,
+    page = 1,
+    perPage = 30
+  ): Promise<StravaActivity[]> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: perPage.toString(),
+    });
+
+    if (before) params.append('before', before.toString());
+    if (after) params.append('after', after.toString());
+
+    const activities = await this.makeAuthenticatedRequest(
+      `${STRAVA_BASE_URL}/athlete/activities?${params.toString()}`,
+      accessToken
+    );
+
+    return (activities as StravaActivity[]).filter(activity => 
+      activity.sport_type === 'Ride' || activity.type === 'Ride'
+    );
+  }
 }
 
 export const stravaClient = new StravaClient();
