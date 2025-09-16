@@ -207,18 +207,6 @@ export default function PlanExport({ plan, className = '' }: PlanExportProps) {
           </button>
         </div>
 
-        {/* Strava Functionality Video Button */}
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-          <button
-            onClick={() => window.open('https://www.loom.com/share/9dc7e530e724464ca70f1e4d0671e308?sid=e54d5f3c-4456-471f-abb2-7493cda7a8bd', '_blank')}
-            className="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            Strava Functionality Video
-          </button>
-        </div>
 
         <div className="text-xs text-gray-500 dark:text-gray-400">
           <p>• Text format provides a readable summary of your plan</p>
