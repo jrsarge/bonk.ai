@@ -4,33 +4,30 @@ AI-powered personalized running training plans that help you never hit the wall 
 
 ## Overview
 
-bonk.ai is a Next.js web application that generates personalized 12-week running training plans by analyzing users' Strava data and using AI (Anthropic's Claude) to create intelligent, data-driven training recommendations. The MVP focuses on Strava integration, AI plan generation, and clean plan presentation.
+bonk.ai is a Next.js web application that generates personalized 12-week running training plans using AI (Anthropic's Claude). The application features a simplified, streamlined architecture focused on delivering intelligent training recommendations with a clean, responsive interface.
 
 ## Features
 
-- **Strava Integration**: Connect your Strava account to analyze your training history
-- **AI-Powered Plans**: Claude AI generates personalized 12-week training plans
+- **AI-Powered Plans**: Claude AI generates personalized 12-week running training plans
 - **Multiple Distances**: Support for 5K, 10K, Half Marathon, and Marathon training
-- **Smart Analysis**: Analyzes your last 12 weeks of data for fitness assessment
-- **Mobile-First Design**: Responsive design optimized for mobile devices
+- **Responsive Design**: Mobile-first design optimized for all devices
+- **Analytics Integration**: Vercel Analytics for performance monitoring
+- **Simplified Architecture**: Streamlined codebase for faster development and deployment
 
 ## Technology Stack
 
-- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes (serverless), Vercel deployment
-- **Database**: PlanetScale (MySQL) for persistent data, Vercel KV (Redis) for caching
-- **External APIs**: Strava API v3, Anthropic Claude API
-- **Deployment**: Vercel with custom domain
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4
+- **Backend**: Next.js API Routes (serverless)
+- **AI**: Anthropic Claude API
+- **Analytics**: Vercel Analytics
+- **Deployment**: Vercel
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Strava API credentials
 - Anthropic API key
-- PlanetScale database
-- Vercel KV instance
 
 ### Installation
 
@@ -50,22 +47,15 @@ npm install
 cp .env.example .env.local
 ```
 
-Edit `.env.local` with your actual API keys and configuration values.
+Edit `.env.local` with your Anthropic API key.
 
 ### Required Environment Variables
 
-- `STRAVA_CLIENT_ID` - Your Strava API client ID
-- `STRAVA_CLIENT_SECRET` - Your Strava API client secret
 - `ANTHROPIC_API_KEY` - Your Anthropic API key
-- `DATABASE_URL` - PlanetScale connection string
-- `KV_REST_API_URL` - Vercel KV URL
-- `KV_REST_API_TOKEN` - Vercel KV token
-- `NEXTAUTH_SECRET` - Session encryption key
-- `NEXTAUTH_URL` - Your app domain (http://localhost:3000 for development)
 
 ### Development
 
-Run the development server:
+Run the development server with Turbopack:
 
 ```bash
 npm run dev
@@ -84,63 +74,59 @@ npm run build
 ```
 bonk.ai/
 ├── app/                    # Next.js App Router pages and API routes
-│   ├── (auth)/            # Authentication pages (connect, callback)
-│   ├── dashboard/         # Main dashboard
-│   ├── api/               # API routes
-│   │   ├── auth/          # Authentication endpoints
-│   │   ├── user/          # User data endpoints
-│   │   └── plans/         # Training plan endpoints
-│   ├── globals.css        # Global styles and Tailwind config
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Landing page
-├── components/            # Reusable React components
-│   ├── auth/              # Authentication components
-│   ├── plans/             # Training plan components
-│   ├── ui/                # UI components
-│   └── layout/            # Layout components
-├── lib/                   # Utility libraries
-│   ├── auth/              # Authentication utilities
-│   ├── api/               # API clients
-│   ├── db/                # Database utilities
-│   └── utils/             # General utilities
-├── types/                 # TypeScript type definitions
-│   ├── index.ts           # Main types
-│   ├── strava.ts          # Strava API types
-│   └── training.ts        # Training plan types
-└── docs/                  # Project documentation
+│   ├── connect/            # Authentication/connection pages
+│   ├── dashboard/          # Main dashboard
+│   ├── api/                # API routes
+│   ├── globals.css         # Global styles and Tailwind config
+│   ├── layout.tsx          # Root layout with analytics
+│   └── page.tsx            # Landing page
+├── components/             # Reusable React components
+│   ├── auth/               # Authentication components
+│   ├── plans/              # Training plan components
+│   ├── training/           # Training-related components
+│   ├── ui/                 # UI components
+│   └── layout/             # Layout components
+├── lib/                    # Utility libraries
+│   ├── api/                # API clients
+│   ├── auth/               # Authentication context
+│   ├── export/             # Export utilities
+│   ├── storage/            # Storage utilities
+│   ├── training/           # Training plan logic
+│   └── utils/              # General utilities
+├── types/                  # TypeScript type definitions
+├── public/                 # Static assets
+└── docs/                   # Project documentation
 ```
 
-## API Endpoints
+## Scripts
 
-- `GET /api/auth/strava` - Initiate Strava OAuth
-- `GET /api/auth/callback` - Handle OAuth callback
-- `POST /api/auth/logout` - Clear user session
-- `GET /api/user/profile` - Get user profile
-- `GET /api/user/activities` - Get Strava activities
-- `GET /api/user/stats` - Get training analysis
-- `POST /api/plans/generate` - Generate training plan
-- `GET /api/plans/[id]` - Get specific plan
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production with Turbopack
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
-## Key Business Rules
+## Key Features
 
 ### Training Plans
-- Always 12 weeks long with proper periodization
-- Pace recommendations based on recent Strava performance
-- Distance-specific focuses (5K: speed, Marathon: endurance)
-- Weekly mileage progresses logically with recovery weeks
+- 12-week periodized training plans
+- Distance-specific training focuses
+- AI-generated recommendations based on goals and preferences
+- Clean, printable plan format
+- Export capabilities
 
-### Strava Integration
-- Only fetch running activities (exclude cycling, swimming)
-- Analyze last 12 weeks of data
-- Respect API rate limits (100/15min, 1000/day)
-- Cache activity data for 4 hours
+### Modern Stack
+- Latest Next.js 15 with App Router
+- React 19 for improved performance
+- Tailwind CSS 4 for styling
+- TypeScript for type safety
+- Turbopack for faster builds and development
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Run `npm run lint` to check for issues
 5. Submit a pull request
 
 ## License
