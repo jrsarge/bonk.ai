@@ -76,7 +76,7 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
       },
       body: JSON.stringify({
         accessToken: stravaAccessToken,
-        weeks: 12
+        weeks: 52
       }),
     });
 

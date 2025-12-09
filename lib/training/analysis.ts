@@ -6,10 +6,11 @@ export interface TrainingAnalysis {
   averagePace: number; // in minutes per mile
   weeklyMileage: WeeklyMileage[];
   paceDistribution: PaceZone[];
+  heartRateZones: HeartRateZone[];
   runFrequency: number; // runs per week
   longestRun: number;
   averageDistance: number;
-  fitnessScore: number;
+  totalKudos: number;
   recommendations: string[];
   lastUpdated: Date;
 }
@@ -20,6 +21,7 @@ export interface WeeklyMileage {
   distance: number;
   runs: number;
   averagePace: number;
+  elevationGain: number;
 }
 
 export interface PaceZone {
@@ -28,6 +30,16 @@ export interface PaceZone {
   maxPace: number; // minutes per mile
   percentage: number;
   distance: number;
+}
+
+export interface HeartRateZone {
+  zone: 1 | 2 | 3 | 4 | 5;
+  name: 'Recovery' | 'Aerobic' | 'Tempo' | 'Threshold' | 'VO2 Max';
+  minHR: number;
+  maxHR: number;
+  percentage: number;
+  distance: number;
+  time: number; // in minutes
 }
 
 export class TrainingAnalyzer {
@@ -47,10 +59,11 @@ export class TrainingAnalyzer {
     const averagePace = this.calculateAveragePace();
     const weeklyMileage = this.calculateWeeklyMileage();
     const paceDistribution = this.calculatePaceDistribution();
+    const heartRateZones = this.calculateHeartRateZones();
     const runFrequency = this.calculateRunFrequency();
     const longestRun = this.calculateLongestRun();
     const averageDistance = this.calculateAverageDistance();
-    const fitnessScore = this.calculateFitnessScore();
+    const totalKudos = this.calculateTotalKudos();
     const recommendations = this.generateRecommendations();
 
     return {
@@ -59,10 +72,11 @@ export class TrainingAnalyzer {
       averagePace,
       weeklyMileage,
       paceDistribution,
+      heartRateZones,
       runFrequency,
       longestRun,
       averageDistance,
-      fitnessScore,
+      totalKudos,
       recommendations,
       lastUpdated: new Date(),
     };
@@ -114,7 +128,8 @@ export class TrainingAnalyzer {
         weekEnd: week.weekEnd,
         distance: week.activities.reduce((sum, activity) => sum + this.metersToMiles(activity.distance), 0),
         runs: week.activities.length,
-        averagePace: this.calculateWeekAveragePace(week.activities)
+        averagePace: this.calculateWeekAveragePace(week.activities),
+        elevationGain: week.activities.reduce((sum, activity) => sum + (activity.total_elevation_gain || 0), 0)
       }))
       .sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime())
       .slice(0, 12);
@@ -176,6 +191,63 @@ export class TrainingAnalyzer {
     return paceZones;
   }
 
+  private calculateHeartRateZones(): HeartRateZone[] {
+    // Filter activities with heart rate data
+    const hrActivities = this.activities.filter(activity =>
+      activity.has_heartrate && activity.average_heartrate > 0
+    );
+
+    // If no HR data, return empty zones
+    if (hrActivities.length === 0) {
+      return [
+        { zone: 1, name: 'Recovery', minHR: 0, maxHR: 0, percentage: 0, distance: 0, time: 0 },
+        { zone: 2, name: 'Aerobic', minHR: 0, maxHR: 0, percentage: 0, distance: 0, time: 0 },
+        { zone: 3, name: 'Tempo', minHR: 0, maxHR: 0, percentage: 0, distance: 0, time: 0 },
+        { zone: 4, name: 'Threshold', minHR: 0, maxHR: 0, percentage: 0, distance: 0, time: 0 },
+        { zone: 5, name: 'VO2 Max', minHR: 0, maxHR: 0, percentage: 0, distance: 0, time: 0 }
+      ];
+    }
+
+    // Estimate max HR from observed max heart rates
+    const observedMaxHR = Math.max(...hrActivities.map(a => a.max_heartrate || a.average_heartrate));
+    const maxHR = Math.max(observedMaxHR, 180); // Use at least 180 as baseline
+
+    // Define HR zones based on percentage of max HR
+    const zones: HeartRateZone[] = [
+      { zone: 1, name: 'Recovery', minHR: Math.round(maxHR * 0.50), maxHR: Math.round(maxHR * 0.60), percentage: 0, distance: 0, time: 0 },
+      { zone: 2, name: 'Aerobic', minHR: Math.round(maxHR * 0.60), maxHR: Math.round(maxHR * 0.70), percentage: 0, distance: 0, time: 0 },
+      { zone: 3, name: 'Tempo', minHR: Math.round(maxHR * 0.70), maxHR: Math.round(maxHR * 0.80), percentage: 0, distance: 0, time: 0 },
+      { zone: 4, name: 'Threshold', minHR: Math.round(maxHR * 0.80), maxHR: Math.round(maxHR * 0.90), percentage: 0, distance: 0, time: 0 },
+      { zone: 5, name: 'VO2 Max', minHR: Math.round(maxHR * 0.90), maxHR: Math.round(maxHR * 1.00), percentage: 0, distance: 0, time: 0 }
+    ];
+
+    const totalDistance = hrActivities.reduce((sum, activity) => sum + this.metersToMiles(activity.distance), 0);
+    const totalTime = hrActivities.reduce((sum, activity) => sum + (activity.moving_time / 60), 0);
+
+    // Classify each activity into zones based on average HR
+    hrActivities.forEach(activity => {
+      const avgHR = activity.average_heartrate;
+      const distance = this.metersToMiles(activity.distance);
+      const time = activity.moving_time / 60;
+
+      // Find which zone this activity belongs to
+      for (let i = zones.length - 1; i >= 0; i--) {
+        if (avgHR >= zones[i].minHR) {
+          zones[i].distance += distance;
+          zones[i].time += time;
+          break;
+        }
+      }
+    });
+
+    // Calculate percentages
+    zones.forEach(zone => {
+      zone.percentage = totalDistance > 0 ? (zone.distance / totalDistance) * 100 : 0;
+    });
+
+    return zones;
+  }
+
   private calculateRunFrequency(): number {
     if (this.activities.length === 0) return 0;
     
@@ -194,28 +266,8 @@ export class TrainingAnalyzer {
     return this.calculateTotalDistance() / this.activities.length;
   }
 
-  private calculateFitnessScore(): number {
-    const totalDistance = this.calculateTotalDistance();
-    const runFrequency = this.calculateRunFrequency();
-    const longestRun = this.calculateLongestRun();
-    
-    // Simple fitness score calculation (0-100)
-    let score = 0;
-    
-    // Distance component (40% of score)
-    score += Math.min((totalDistance / 200) * 40, 40);
-    
-    // Frequency component (30% of score)
-    score += Math.min((runFrequency / 5) * 30, 30);
-    
-    // Long run component (20% of score)
-    score += Math.min((longestRun / 20) * 20, 20);
-    
-    // Pace consistency component (10% of score)
-    const paceVariation = this.calculatePaceVariation();
-    score += Math.max(10 - (paceVariation * 2), 0);
-    
-    return Math.round(Math.max(Math.min(score, 100), 0));
+  private calculateTotalKudos(): number {
+    return this.activities.reduce((sum, activity) => sum + (activity.kudos_count || 0), 0);
   }
 
   private generateRecommendations(): string[] {

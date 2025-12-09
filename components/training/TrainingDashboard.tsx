@@ -1,24 +1,135 @@
 'use client';
 
+import { useState, useMemo, useEffect } from 'react';
 import { useTrainingAnalysis } from '@/lib/training/useAnalysis';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MetricsGrid } from './MetricsGrid';
 import { WeeklyChart } from './WeeklyChart';
+import { ElevationChart } from './ElevationChart';
 import { PaceDistribution } from './PaceDistribution';
 import { useApp } from '@/lib/auth/context';
+import { TrainingAnalyzer } from '@/lib/training/analysis';
 
 export function TrainingDashboard() {
   const { isStravaConnected } = useApp();
-  const { 
-    analysis, 
-    activities, 
-    isLoading, 
-    error, 
-    refreshAnalysis, 
-    lastFetched 
+  const [hoveredWeekIndex, setHoveredWeekIndex] = useState<number | null>(null);
+  const [selectedWeekIndex, setSelectedWeekIndex] = useState<number | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = most recent 12 weeks, 1 = 12 weeks before, etc.
+  const {
+    analysis,
+    activities,
+    isLoading,
+    error,
+    refreshAnalysis,
+    lastFetched
   } = useTrainingAnalysis();
+
+  // Filter activities by week offset (12-week periods)
+  const { periodAnalysis, periodActivities, periodLabel, canGoBack, canGoForward } = useMemo(() => {
+    if (!activities || activities.length === 0) {
+      return {
+        periodAnalysis: analysis,
+        periodActivities: activities,
+        periodLabel: 'Last 12 weeks',
+        canGoBack: false,
+        canGoForward: false
+      };
+    }
+
+    // Calculate date range for the current offset
+    const now = new Date();
+    const weeksPerPeriod = 12;
+    const startOffset = weekOffset * weeksPerPeriod;
+    const endOffset = (weekOffset + 1) * weeksPerPeriod;
+
+    const periodEnd = new Date(now);
+    periodEnd.setDate(periodEnd.getDate() - (startOffset * 7));
+    periodEnd.setHours(23, 59, 59, 999); // Set to end of day
+
+    const periodStart = new Date(now);
+    periodStart.setDate(periodStart.getDate() - (endOffset * 7));
+    periodStart.setHours(0, 0, 0, 0); // Set to start of day
+
+    // Filter activities for this period
+    const periodActivities = activities.filter(activity => {
+      const activityDate = new Date(activity.start_date);
+      return activityDate >= periodStart && activityDate <= periodEnd;
+    });
+
+    // Recalculate analysis for this period
+    let periodAnalysis = analysis;
+    if (periodActivities.length > 0) {
+      const analyzer = new TrainingAnalyzer(periodActivities);
+      periodAnalysis = analyzer.analyze();
+    }
+
+    // Create label
+    const periodLabel = weekOffset === 0
+      ? 'Last 12 weeks'
+      : `${periodStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${periodEnd.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+
+    // Check if we can navigate
+    const oldestActivity = activities.length > 0
+      ? new Date(Math.min(...activities.map(a => new Date(a.start_date).getTime())))
+      : now;
+    const canGoBack = periodStart > oldestActivity;
+    const canGoForward = weekOffset > 0;
+
+    return {
+      periodAnalysis,
+      periodActivities,
+      periodLabel,
+      canGoBack,
+      canGoForward
+    };
+  }, [activities, analysis, weekOffset]);
+
+  // Filter and recalculate analysis when a week is selected
+  const { filteredAnalysis, filteredActivities } = useMemo(() => {
+    if (!periodAnalysis || selectedWeekIndex === null) {
+      return { filteredAnalysis: periodAnalysis, filteredActivities: periodActivities };
+    }
+
+    // Get the selected week from the sorted data
+    const sortedWeeks = [...periodAnalysis.weeklyMileage].sort((a, b) =>
+      a.weekStart.getTime() - b.weekStart.getTime()
+    );
+
+    if (selectedWeekIndex >= sortedWeeks.length) {
+      return { filteredAnalysis: periodAnalysis, filteredActivities: periodActivities };
+    }
+
+    const selectedWeek = sortedWeeks[selectedWeekIndex];
+
+    // Filter activities that fall within the selected week
+    const weekActivities = periodActivities.filter(activity => {
+      const activityDate = new Date(activity.start_date);
+      return activityDate >= selectedWeek.weekStart && activityDate <= selectedWeek.weekEnd;
+    });
+
+    // Recalculate analysis for just this week's activities
+    if (weekActivities.length === 0) {
+      return { filteredAnalysis: periodAnalysis, filteredActivities: periodActivities };
+    }
+
+    const analyzer = new TrainingAnalyzer(weekActivities);
+    return {
+      filteredAnalysis: analyzer.analyze(),
+      filteredActivities: weekActivities
+    };
+  }, [periodAnalysis, selectedWeekIndex, periodActivities]);
+
+  const handleWeekClick = (index: number | null) => {
+    // Toggle selection: if clicking the same week, deselect it
+    setSelectedWeekIndex(prev => prev === index ? null : index);
+  };
+
+  // Clear selected week when changing periods
+  useEffect(() => {
+    setSelectedWeekIndex(null);
+  }, [weekOffset]);
 
   if (!isStravaConnected) {
     return (
@@ -114,14 +225,119 @@ export function TrainingDashboard() {
         </Card>
       )}
 
-      {/* Key Metrics */}
-      <MetricsGrid analysis={analysis} />
+      {/* Period Navigation */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setWeekOffset(prev => prev + 1)}
+              disabled={!canGoBack}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="View previous 12 weeks"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
 
-      {/* Charts and Analysis */}
+            <div className="text-center">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">{periodLabel}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {periodActivities.length} runs
+              </div>
+            </div>
+
+            <button
+              onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+              disabled={!canGoForward}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="View next 12 weeks"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {weekOffset > 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+            >
+              Return to current period
+            </button>
+          )}
+        </div>
+      </Card>
+
+      {/* Filter indicator */}
+      {selectedWeekIndex !== null && periodAnalysis && (
+        <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                Viewing week of {(() => {
+                  const sortedWeeks = [...periodAnalysis.weeklyMileage].sort((a, b) =>
+                    a.weekStart.getTime() - b.weekStart.getTime()
+                  );
+                  return sortedWeeks[selectedWeekIndex]?.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                })()}
+              </span>
+              <span className="text-xs text-blue-700 dark:text-blue-300 ml-2">
+                (Click the point again or elsewhere to view all weeks in period)
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedWeekIndex(null)}
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Charts Grid */}
       <div className="grid md:grid-cols-2 gap-6">
-        <WeeklyChart weeklyMileage={analysis.weeklyMileage} />
-        <PaceDistribution paceDistribution={analysis.paceDistribution} />
+        {/* Left Column - Synchronized Charts */}
+        <div className="space-y-6">
+          <WeeklyChart
+            weeklyMileage={periodAnalysis.weeklyMileage}
+            hoveredIndex={hoveredWeekIndex}
+            onHoverChange={setHoveredWeekIndex}
+            selectedIndex={selectedWeekIndex}
+            onWeekClick={handleWeekClick}
+          />
+          <ElevationChart
+            weeklyMileage={periodAnalysis.weeklyMileage}
+            hoveredIndex={hoveredWeekIndex}
+            onHoverChange={setHoveredWeekIndex}
+            selectedIndex={selectedWeekIndex}
+            onWeekClick={handleWeekClick}
+          />
+        </div>
+
+        {/* Right Column - Heart Rate Zone Distribution */}
+        <PaceDistribution
+          heartRateZones={filteredAnalysis?.heartRateZones || analysis.heartRateZones}
+          activities={filteredActivities}
+        />
       </div>
+
+      {/* Key Metrics */}
+      <MetricsGrid
+        analysis={filteredAnalysis || analysis}
+        isFiltered={selectedWeekIndex !== null}
+        filterLabel={selectedWeekIndex !== null && analysis ? (() => {
+          const sortedWeeks = [...analysis.weeklyMileage].sort((a, b) =>
+            a.weekStart.getTime() - b.weekStart.getTime()
+          );
+          const weekDate = sortedWeeks[selectedWeekIndex]?.weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return `Week of ${weekDate}`;
+        })() : undefined}
+      />
 
       {/* Recommendations */}
       <Card>

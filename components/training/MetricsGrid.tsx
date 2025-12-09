@@ -5,9 +5,11 @@ import Card from '@/components/ui/Card';
 
 interface MetricsGridProps {
   analysis: TrainingAnalysis;
+  isFiltered?: boolean;
+  filterLabel?: string;
 }
 
-export function MetricsGrid({ analysis }: MetricsGridProps) {
+export function MetricsGrid({ analysis, isFiltered = false, filterLabel }: MetricsGridProps) {
   const formatPace = (paceMinutes: number) => {
     const minutes = Math.floor(paceMinutes);
     const seconds = Math.round((paceMinutes - minutes) * 60);
@@ -24,17 +26,13 @@ export function MetricsGrid({ analysis }: MetricsGridProps) {
     return `${mins}m`;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
+  const periodLabel = isFiltered && filterLabel ? filterLabel : 'Last 12 weeks';
 
   const metrics = [
     {
       label: 'Total Distance',
       value: `${analysis.totalDistance.toFixed(1)} mi`,
-      subtext: 'Last 12 weeks',
+      subtext: periodLabel,
       icon: '🏃'
     },
     {
@@ -52,7 +50,7 @@ export function MetricsGrid({ analysis }: MetricsGridProps) {
     {
       label: 'Longest Run',
       value: `${analysis.longestRun.toFixed(1)} mi`,
-      subtext: 'in period',
+      subtext: periodLabel,
       icon: '🎯'
     },
     {
@@ -62,11 +60,10 @@ export function MetricsGrid({ analysis }: MetricsGridProps) {
       icon: '⏱️'
     },
     {
-      label: 'Fitness Score',
-      value: analysis.fitnessScore.toString(),
-      subtext: 'out of 100',
-      icon: '💪',
-      valueClass: getScoreColor(analysis.fitnessScore)
+      label: 'Total Kudos',
+      value: analysis.totalKudos.toString(),
+      subtext: periodLabel,
+      icon: '👍'
     }
   ];
 
@@ -76,11 +73,11 @@ export function MetricsGrid({ analysis }: MetricsGridProps) {
         <Card key={index}>
           <div className="p-4 text-center">
             <div className="text-2xl mb-2">{metric.icon}</div>
-            <div className={`text-xl font-bold ${metric.valueClass || 'text-gray-900'}`}>
+            <div className="text-xl font-bold text-gray-900 dark:text-white">
               {metric.value}
             </div>
-            <div className="text-sm text-gray-600 font-medium">{metric.label}</div>
-            <div className="text-xs text-gray-500">{metric.subtext}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{metric.label}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{metric.subtext}</div>
           </div>
         </Card>
       ))}

@@ -3,7 +3,7 @@
 import { WeeklyMileage } from '@/lib/training/analysis';
 import Card from '@/components/ui/Card';
 
-interface WeeklyChartProps {
+interface ElevationChartProps {
   weeklyMileage: WeeklyMileage[];
   hoveredIndex: number | null;
   onHoverChange: (index: number | null) => void;
@@ -11,11 +11,10 @@ interface WeeklyChartProps {
   onWeekClick: (index: number | null) => void;
 }
 
-export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, selectedIndex, onWeekClick }: WeeklyChartProps) {
-  const maxDistance = Math.max(...weeklyMileage.map(w => w.distance), 0);
-  const avgDistance = weeklyMileage.length > 0
-    ? weeklyMileage.reduce((sum, w) => sum + w.distance, 0) / weeklyMileage.length
-    : 0;
+export function ElevationChart({ weeklyMileage, hoveredIndex, onHoverChange, selectedIndex, onWeekClick }: ElevationChartProps) {
+  const maxElevation = Math.max(...weeklyMileage.map(w => w.elevationGain), 0);
+  const totalElevation = weeklyMileage.reduce((sum, w) => sum + w.elevationGain, 0);
+  const avgElevation = weeklyMileage.length > 0 ? totalElevation / weeklyMileage.length : 0;
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
@@ -23,6 +22,9 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
       day: 'numeric'
     });
   };
+
+  // Convert meters to feet
+  const metersToFeet = (meters: number) => meters * 3.28084;
 
   // Sort data from oldest to newest for the line chart
   const sortedData = [...weeklyMileage].sort((a, b) =>
@@ -37,7 +39,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
   const chartHeight = height - padding.top - padding.bottom;
 
   // Calculate scales
-  const yMax = maxDistance * 1.1; // Add 10% padding at top
+  const yMax = maxElevation * 1.1; // Add 10% padding at top
   const xStep = chartWidth / (sortedData.length - 1 || 1);
 
   // Generate path for line
@@ -46,7 +48,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
 
     return sortedData.map((week, index) => {
       const x = padding.left + (index * xStep);
-      const y = padding.top + chartHeight - (week.distance / yMax * chartHeight);
+      const y = padding.top + chartHeight - (week.elevationGain / yMax * chartHeight);
       return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
     }).join(' ');
   };
@@ -57,7 +59,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
 
     const linePath = sortedData.map((week, index) => {
       const x = padding.left + (index * xStep);
-      const y = padding.top + chartHeight - (week.distance / yMax * chartHeight);
+      const y = padding.top + chartHeight - (week.elevationGain / yMax * chartHeight);
       return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
     }).join(' ');
 
@@ -70,7 +72,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Weekly Mileage Trend</h3>
+        <h3 className="text-lg font-semibold mb-4">Weekly Elevation Gain</h3>
 
         {weeklyMileage.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
@@ -106,7 +108,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                         className="text-xs fill-gray-500"
                         style={{ fontSize: '12px' }}
                       >
-                        {(yMax * fraction).toFixed(0)}
+                        {metersToFeet(yMax * fraction).toFixed(0)}
                       </text>
                     </g>
                   );
@@ -129,7 +131,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                 {/* Area fill */}
                 <path
                   d={generateAreaPath()}
-                  fill="rgb(59, 130, 246)"
+                  fill="rgb(34, 197, 94)"
                   fillOpacity="0.1"
                 />
 
@@ -137,7 +139,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                 <path
                   d={generatePath()}
                   fill="none"
-                  stroke="rgb(59, 130, 246)"
+                  stroke="rgb(34, 197, 94)"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -146,7 +148,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                 {/* Data points */}
                 {sortedData.map((week, index) => {
                   const x = padding.left + (index * xStep);
-                  const y = padding.top + chartHeight - (week.distance / yMax * chartHeight);
+                  const y = padding.top + chartHeight - (week.elevationGain / yMax * chartHeight);
                   const isHovered = hoveredIndex === index;
                   const isSelected = selectedIndex === index;
 
@@ -159,7 +161,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                           cy={y}
                           r="8"
                           fill="none"
-                          stroke="rgb(59, 130, 246)"
+                          stroke="rgb(34, 197, 94)"
                           strokeWidth="2"
                           opacity="0.5"
                         />
@@ -168,8 +170,8 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                         cx={x}
                         cy={y}
                         r={isSelected ? "6" : isHovered ? "6" : "4"}
-                        fill={isSelected ? "rgb(59, 130, 246)" : "white"}
-                        stroke="rgb(59, 130, 246)"
+                        fill={isSelected ? "rgb(34, 197, 94)" : "white"}
+                        stroke="rgb(34, 197, 94)"
                         strokeWidth={isHovered || isSelected ? "3" : "2"}
                         className="transition-all"
                       />
@@ -222,14 +224,14 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                   className="text-xs fill-gray-600 font-medium"
                   style={{ fontSize: '12px' }}
                 >
-                  Miles
+                  Feet
                 </text>
               </svg>
 
               {/* Tooltip */}
               {hoveredIndex !== null && sortedData[hoveredIndex] && (() => {
                 const x = padding.left + (hoveredIndex * xStep);
-                const y = padding.top + chartHeight - (sortedData[hoveredIndex].distance / yMax * chartHeight);
+                const y = padding.top + chartHeight - (sortedData[hoveredIndex].elevationGain / yMax * chartHeight);
 
                 // Calculate tooltip position as percentage
                 const tooltipX = (x / width) * 100;
@@ -268,7 +270,7 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
                     }}
                   >
                     <div className="font-semibold text-xs">{formatDate(sortedData[hoveredIndex].weekStart)}</div>
-                    <div className="text-blue-300">{sortedData[hoveredIndex].distance.toFixed(1)} miles</div>
+                    <div className="text-green-300">{metersToFeet(sortedData[hoveredIndex].elevationGain).toFixed(0)} ft</div>
                     <div className="text-gray-300">{sortedData[hoveredIndex].runs} runs</div>
                   </div>
                 );
@@ -278,18 +280,18 @@ export function WeeklyChart({ weeklyMileage, hoveredIndex, onHoverChange, select
             {/* Summary stats */}
             <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-900 dark:text-white">{avgDistance.toFixed(1)} mi</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">{metersToFeet(avgElevation).toFixed(0)} ft</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Avg Weekly</div>
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-900 dark:text-white">{maxDistance.toFixed(1)} mi</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">{metersToFeet(maxElevation).toFixed(0)} ft</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Peak Week</div>
               </div>
               <div className="text-center">
                 <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {weeklyMileage.reduce((sum, w) => sum + w.runs, 0)}
+                  {metersToFeet(totalElevation).toFixed(0)} ft
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Total Runs</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Gain</div>
               </div>
             </div>
           </>
