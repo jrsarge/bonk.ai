@@ -102,7 +102,7 @@ export function TrainingDashboard() {
           <h3 className="font-semibold">Error Loading Training Data</h3>
           <p className="mt-2">{error}</p>
         </div>
-        <Button onClick={refreshAnalysis} disabled={isLoading}>
+        <Button onClick={() => refreshAnalysis()} disabled={isLoading}>
           {isLoading ? 'Retrying...' : 'Try Again'}
         </Button>
       </Card>
@@ -114,10 +114,10 @@ export function TrainingDashboard() {
       <Card className="p-8 text-center">
         <h3 className="text-lg font-semibold mb-4">No Running Data Found</h3>
         <p className="text-gray-600 mb-4">
-          No running activities found in the last 12 weeks. 
+          No running activities found in the last 12 weeks.
           Make sure you have running activities recorded in Strava.
         </p>
-        <Button onClick={refreshAnalysis} disabled={isLoading}>
+        <Button onClick={() => refreshAnalysis()} disabled={isLoading}>
           {isLoading ? 'Checking...' : 'Refresh Data'}
         </Button>
       </Card>
@@ -191,7 +191,7 @@ export function TrainingDashboard() {
         <Card className="p-4 bg-red-50 border-red-200">
           <div className="flex items-center justify-between">
             <p className="text-red-800">Failed to refresh data: {error}</p>
-            <Button size="sm" onClick={refreshAnalysis} disabled={isLoading}>
+            <Button size="sm" onClick={() => refreshAnalysis()} disabled={isLoading}>
               Retry
             </Button>
           </div>
