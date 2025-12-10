@@ -23,7 +23,15 @@ export function RunMapView({ activities }: RunMapViewProps) {
 
     // Dynamically import Leaflet only on the client side
     import('leaflet').then((L) => {
-      import('leaflet/dist/leaflet.css');
+      // Dynamically add Leaflet CSS
+      if (!document.querySelector('link[href*="leaflet.css"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+        link.crossOrigin = '';
+        document.head.appendChild(link);
+      }
 
       // Fix Leaflet default icon path issue with bundlers
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
