@@ -34,7 +34,7 @@ export function ElevationChart({ weeklyMileage, hoveredIndex, onHoverChange, sel
   // Chart dimensions
   const width = 600;
   const height = 180;
-  const padding = { top: 20, right: 20, bottom: 30, left: 50 };
+  const padding = { top: 20, right: 20, bottom: 30, left: 60 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
@@ -217,10 +217,10 @@ export function ElevationChart({ weeklyMileage, hoveredIndex, onHoverChange, sel
 
                 {/* Y-axis label */}
                 <text
-                  x={padding.left - 35}
+                  x={15}
                   y={padding.top + chartHeight / 2}
                   textAnchor="middle"
-                  transform={`rotate(-90 ${padding.left - 35} ${padding.top + chartHeight / 2})`}
+                  transform={`rotate(-90 15 ${padding.top + chartHeight / 2})`}
                   className="text-xs fill-gray-600 font-medium"
                   style={{ fontSize: '12px' }}
                 >

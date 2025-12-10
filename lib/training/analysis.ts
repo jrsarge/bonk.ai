@@ -131,8 +131,7 @@ export class TrainingAnalyzer {
         averagePace: this.calculateWeekAveragePace(week.activities),
         elevationGain: week.activities.reduce((sum, activity) => sum + (activity.total_elevation_gain || 0), 0)
       }))
-      .sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime())
-      .slice(0, 12);
+      .sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime());
   }
 
   private calculatePaceDistribution(): PaceZone[] {

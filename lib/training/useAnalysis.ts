@@ -5,31 +5,33 @@ import { StravaActivity } from '@/types/strava';
 import { TrainingAnalysis, TrainingAnalyzer } from './analysis';
 import { useApp } from '@/lib/auth/context';
 
-const CACHE_KEY = 'training_analysis';
-const ACTIVITIES_CACHE_KEY = 'strava_activities';
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
+const getCacheKey = (weeks: number) => `training_analysis_${weeks}w`;
+const getActivitiesCacheKey = (weeks: number) => `strava_activities_${weeks}w`;
 
 interface AnalysisHookReturn {
   analysis: TrainingAnalysis | null;
   activities: StravaActivity[];
   isLoading: boolean;
   error: string | null;
-  refreshAnalysis: () => Promise<void>;
+  refreshAnalysis: (weeks?: number) => Promise<void>;
   lastFetched: Date | null;
 }
 
-export function useTrainingAnalysis(): AnalysisHookReturn {
+export function useTrainingAnalysis(initialWeeks = 12): AnalysisHookReturn {
   const { stravaAccessToken } = useApp();
+  const [weeks, setWeeks] = useState(initialWeeks);
   const [analysis, setAnalysis] = useState<TrainingAnalysis | null>(null);
   const [activities, setActivities] = useState<StravaActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-  const loadCachedData = useCallback(() => {
+  const loadCachedData = useCallback((weeksToLoad: number) => {
     try {
       // Load cached analysis
-      const cachedAnalysis = localStorage.getItem(CACHE_KEY);
+      const cachedAnalysis = localStorage.getItem(getCacheKey(weeksToLoad));
       if (cachedAnalysis) {
         const parsed = JSON.parse(cachedAnalysis);
         setAnalysis({
@@ -44,7 +46,7 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
       }
 
       // Load cached activities
-      const cachedActivities = localStorage.getItem(ACTIVITIES_CACHE_KEY);
+      const cachedActivities = localStorage.getItem(getActivitiesCacheKey(weeksToLoad));
       if (cachedActivities) {
         const parsed = JSON.parse(cachedActivities);
         setActivities(parsed.data || []);
@@ -64,7 +66,7 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
     return cacheAge > CACHE_DURATION;
   }, [lastFetched]);
 
-  const fetchActivities = useCallback(async (): Promise<StravaActivity[]> => {
+  const fetchActivities = useCallback(async (weeksToFetch: number): Promise<StravaActivity[]> => {
     if (!stravaAccessToken) {
       throw new Error('Strava access token not available');
     }
@@ -76,7 +78,7 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
       },
       body: JSON.stringify({
         accessToken: stravaAccessToken,
-        weeks: 52
+        weeks: weeksToFetch
       }),
     });
 
@@ -89,25 +91,31 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
     return data.activities || [];
   }, [stravaAccessToken]);
 
-  const cacheData = useCallback((activities: StravaActivity[], analysis: TrainingAnalysis) => {
+  const cacheData = useCallback((activities: StravaActivity[], analysis: TrainingAnalysis, weeksToCache: number) => {
     try {
       // Cache activities with timestamp
-      localStorage.setItem(ACTIVITIES_CACHE_KEY, JSON.stringify({
+      localStorage.setItem(getActivitiesCacheKey(weeksToCache), JSON.stringify({
         data: activities,
         timestamp: new Date().toISOString()
       }));
 
       // Cache analysis
-      localStorage.setItem(CACHE_KEY, JSON.stringify(analysis));
+      localStorage.setItem(getCacheKey(weeksToCache), JSON.stringify(analysis));
     } catch (err) {
       console.error('Error caching training data:', err);
     }
   }, []);
 
-  const refreshAnalysis = useCallback(async (): Promise<void> => {
+  const refreshAnalysis = useCallback(async (newWeeks?: number): Promise<void> => {
     if (!stravaAccessToken) {
       setError('Strava access token not available');
       return;
+    }
+
+    // Update weeks if provided
+    const weeksToFetch = newWeeks ?? weeks;
+    if (newWeeks !== undefined) {
+      setWeeks(newWeeks);
     }
 
     setIsLoading(true);
@@ -115,7 +123,7 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
 
     try {
       // Fetch fresh activities
-      const freshActivities = await fetchActivities();
+      const freshActivities = await fetchActivities(weeksToFetch);
       setActivities(freshActivities);
 
       // Generate analysis
@@ -127,8 +135,8 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
       const now = new Date();
       setLastFetched(now);
 
-      // Cache the results
-      cacheData(freshActivities, freshAnalysis);
+      // Cache the results with the weeks parameter
+      cacheData(freshActivities, freshAnalysis, weeksToFetch);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch training data';
@@ -137,19 +145,19 @@ export function useTrainingAnalysis(): AnalysisHookReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [stravaAccessToken, fetchActivities, cacheData]);
+  }, [stravaAccessToken, weeks, fetchActivities, cacheData]);
 
-  // Load cached data on mount
+  // Load cached data on mount and when weeks change
   useEffect(() => {
-    loadCachedData();
-  }, [loadCachedData]);
+    loadCachedData(weeks);
+  }, [loadCachedData, weeks]);
 
   // Auto-refresh when token is available and cache is stale
   useEffect(() => {
     if (stravaAccessToken && shouldRefreshData()) {
-      refreshAnalysis();
+      refreshAnalysis(weeks);
     }
-  }, [stravaAccessToken, shouldRefreshData, refreshAnalysis]);
+  }, [stravaAccessToken, shouldRefreshData, refreshAnalysis, weeks]);
 
   return {
     analysis,
