@@ -8,6 +8,7 @@ interface RunMapViewProps {
 }
 
 export function RunMapView({ activities }: RunMapViewProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
@@ -25,6 +26,7 @@ export function RunMapView({ activities }: RunMapViewProps) {
       import('leaflet/dist/leaflet.css');
 
       // Fix Leaflet default icon path issue with bundlers
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -57,6 +59,7 @@ export function RunMapView({ activities }: RunMapViewProps) {
       if (!map) return;
 
       // Clear existing markers
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.eachLayer((layer: any) => {
         if (layer instanceof L.Marker) {
           map.removeLayer(layer);
@@ -72,6 +75,7 @@ export function RunMapView({ activities }: RunMapViewProps) {
       });
 
       // Add markers for each run
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const markers: any[] = [];
       activitiesWithLocation.forEach((activity) => {
         const [lat, lng] = activity.start_latlng;

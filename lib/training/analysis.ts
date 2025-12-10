@@ -221,7 +221,6 @@ export class TrainingAnalyzer {
     ];
 
     const totalDistance = hrActivities.reduce((sum, activity) => sum + this.metersToMiles(activity.distance), 0);
-    const totalTime = hrActivities.reduce((sum, activity) => sum + (activity.moving_time / 60), 0);
 
     // Classify each activity into zones based on average HR
     hrActivities.forEach(activity => {

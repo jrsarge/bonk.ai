@@ -47,7 +47,6 @@ export function PaceDistribution({ heartRateZones, activities }: PaceDistributio
     );
   }
 
-  const totalDistance = heartRateZones.reduce((sum, zone) => sum + zone.distance, 0);
   const hasHRData = heartRateZones.some(zone => zone.distance > 0);
 
   return (
