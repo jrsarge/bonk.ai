@@ -11,6 +11,7 @@ export interface TrainingAnalysis {
   longestRun: number;
   averageDistance: number;
   totalKudos: number;
+  fitnessScore: number; // 0-100 score based on volume, consistency, and endurance
   recommendations: string[];
   lastUpdated: Date;
 }
@@ -64,6 +65,7 @@ export class TrainingAnalyzer {
     const longestRun = this.calculateLongestRun();
     const averageDistance = this.calculateAverageDistance();
     const totalKudos = this.calculateTotalKudos();
+    const fitnessScore = this.calculateFitnessScore();
     const recommendations = this.generateRecommendations();
 
     return {
@@ -77,6 +79,7 @@ export class TrainingAnalyzer {
       longestRun,
       averageDistance,
       totalKudos,
+      fitnessScore,
       recommendations,
       lastUpdated: new Date(),
     };
@@ -266,6 +269,54 @@ export class TrainingAnalyzer {
 
   private calculateTotalKudos(): number {
     return this.activities.reduce((sum, activity) => sum + (activity.kudos_count || 0), 0);
+  }
+
+  private calculateFitnessScore(): number {
+    if (this.activities.length === 0) return 0;
+
+    // Calculate components of fitness (each out of 25 points, total 100)
+    const weeklyMileage = this.calculateWeeklyMileage();
+    const avgWeeklyDistance = weeklyMileage.length > 0
+      ? weeklyMileage.reduce((sum, week) => sum + week.distance, 0) / weeklyMileage.length
+      : 0;
+
+    // Volume score (0-25): Based on average weekly mileage
+    // 0 miles = 0, 10 miles = 10, 20 miles = 15, 30+ miles = 25
+    let volumeScore = 0;
+    if (avgWeeklyDistance >= 30) volumeScore = 25;
+    else if (avgWeeklyDistance >= 20) volumeScore = 15 + ((avgWeeklyDistance - 20) / 10) * 10;
+    else if (avgWeeklyDistance >= 10) volumeScore = 10 + ((avgWeeklyDistance - 10) / 10) * 5;
+    else volumeScore = avgWeeklyDistance;
+
+    // Consistency score (0-25): Based on run frequency
+    // 0 runs/week = 0, 2 runs = 10, 3 runs = 15, 4+ runs = 25
+    const runFreq = this.calculateRunFrequency();
+    let consistencyScore = 0;
+    if (runFreq >= 4) consistencyScore = 25;
+    else if (runFreq >= 3) consistencyScore = 15 + ((runFreq - 3) / 1) * 10;
+    else if (runFreq >= 2) consistencyScore = 10 + ((runFreq - 2) / 1) * 5;
+    else consistencyScore = runFreq * 5;
+
+    // Endurance score (0-25): Based on longest run
+    // 0 miles = 0, 6 miles = 10, 10 miles = 15, 13+ miles = 25
+    const longestRun = this.calculateLongestRun();
+    let enduranceScore = 0;
+    if (longestRun >= 13) enduranceScore = 25;
+    else if (longestRun >= 10) enduranceScore = 15 + ((longestRun - 10) / 3) * 10;
+    else if (longestRun >= 6) enduranceScore = 10 + ((longestRun - 6) / 4) * 5;
+    else enduranceScore = (longestRun / 6) * 10;
+
+    // Experience score (0-25): Based on average run distance
+    // 0 miles = 0, 3 miles = 10, 5 miles = 15, 7+ miles = 25
+    const avgDistance = this.calculateAverageDistance();
+    let experienceScore = 0;
+    if (avgDistance >= 7) experienceScore = 25;
+    else if (avgDistance >= 5) experienceScore = 15 + ((avgDistance - 5) / 2) * 10;
+    else if (avgDistance >= 3) experienceScore = 10 + ((avgDistance - 3) / 2) * 5;
+    else experienceScore = (avgDistance / 3) * 10;
+
+    // Total fitness score (capped at 100)
+    return Math.min(100, Math.round(volumeScore + consistencyScore + enduranceScore + experienceScore));
   }
 
   private generateRecommendations(): string[] {
